@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y cmake g++ git
+
+      - name: Set up test directory structure
+        run: |
+          sudo mkdir -p tests/highpermfolder/folder/folder
+          sudo mkdir -p tests/lowpermfolder/folder/folder
+
+          sudo touch tests/highpermfolder/folder/folder/highpermfile
+          sudo touch tests/highpermfolder/folder/folder/lowpermfile
+          sudo touch tests/lowpermfolder/folder/folder/highpermfile
+          sudo touch tests/lowpermfolder/folder/folder/lowpermfile
+
+          # All owned by root
+          sudo chown -R root:root tests/
+
+          # highpermfolder and its high perm files/folders: 700
+          sudo chmod 700 tests/highpermfolder
+          sudo chmod 777 tests/highpermfolder/folder
+          sudo chmod 777 tests/highpermfolder/folder/folder
+          sudo chmod 700 tests/highpermfolder/folder/folder/highpermfile
+          sudo chmod 777 tests/highpermfolder/folder/folder/lowpermfile
+
+          # lowpermfolder and its contents: 777, except high perm files
+          sudo chmod 777 tests/lowpermfolder
+          sudo chmod 777 tests/lowpermfolder/folder
+          sudo chmod 777 tests/lowpermfolder/folder/folder
+          sudo chmod 700 tests/lowpermfolder/folder/folder/highpermfile
+          sudo chmod 777 tests/lowpermfolder/folder/folder/lowpermfile
+
+      - name: Configure CMake
+        run: cmake -B build -S .
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run tests
+        run: ./build/testtool
