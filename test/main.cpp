@@ -6,7 +6,7 @@
 TEST_CASE("Get current directory")
 {
     std::string cd = GetCurrentDirectory();
-    REQUIRE(cd == "/home/rt/tools");
+    REQUIRE(cd == std::filesystem::current_path());
 }
 
 TEST_CASE("Get current directory fileobject")
@@ -16,7 +16,7 @@ TEST_CASE("Get current directory fileobject")
     REQUIRE(cdfo != nullptr);
     REQUIRE(!cdfo->isfile);
     Folder *collapsedcd = static_cast<Folder *>(cdfo);
-    REQUIRE(collapsedcd->name == "/home/rt/tools");
+    REQUIRE(collapsedcd->name == std::filesystem::current_path());
 }
 
 TEST_CASE("List current directory")
@@ -25,7 +25,7 @@ TEST_CASE("List current directory")
     REQUIRE(!cd->isfile);
     Folder *collapsedcd = static_cast<Folder *>(cd);
     CHECK(collapsedcd->name == std::filesystem::current_path());
-    REQUIRE(collapsedcd->fileamount == 8);
+    REQUIRE(collapsedcd->fileamount == 9);
     std::vector<std::string> files = {std::filesystem::absolute("src"), std::filesystem::absolute("tests"), std::filesystem::absolute("test"), std::filesystem::absolute("CMakeFiles"), std::filesystem::absolute("main.cpp"), std::filesystem::absolute("build"), std::filesystem::absolute("CMakeLists.txt")};
     for (int i = 0; i < files.size(); i++)
     {
