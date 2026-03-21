@@ -54,7 +54,7 @@ jobs:
         run: |
           path=$PWD
           while [ "$path" != "/" ]; do
-            chmod o+rx "$path"
+            sudo chmod o+rx "$path"
             path=$(dirname "$path")
           done
           sudo -u testuser bash -c "cd $PWD && ./build/testtool"
