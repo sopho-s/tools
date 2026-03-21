@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get install -y cmake g++ git
+        run: sudo apt-get update && sudo apt-get install -y cmake g++ git
 
       - name: Set up test directory structure
         run: |
@@ -41,6 +41,9 @@ jobs:
           sudo chmod 700 tests/lowpermfolder/folder/folder/highpermfile
           sudo chmod 777 tests/lowpermfolder/folder/folder/lowpermfile
 
+      - name: Create test user
+        run: sudo useradd -m testuser
+
       - name: Configure CMake
         run: cmake -B build -S .
 
@@ -48,4 +51,4 @@ jobs:
         run: cmake --build build
 
       - name: Run tests
-        run: ./build/testtool
+        run: sudo -u testuser $PWD/build/testtool

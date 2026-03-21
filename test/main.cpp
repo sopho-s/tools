@@ -1,5 +1,6 @@
 #include "../src/io.h"
 #include "../src/security.h"
+#include "../src/command.h"
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
@@ -26,7 +27,7 @@ TEST_CASE("List current directory")
     Folder *collapsedcd = static_cast<Folder *>(cd);
     CHECK(collapsedcd->name == std::filesystem::current_path());
     REQUIRE(collapsedcd->fileamount == 9);
-    std::vector<std::string> files = {std::filesystem::absolute("src"), std::filesystem::absolute("tests"), std::filesystem::absolute("test"), std::filesystem::absolute("CMakeFiles"), std::filesystem::absolute("main.cpp"), std::filesystem::absolute("build"), std::filesystem::absolute("CMakeLists.txt")};
+    std::vector<std::string> files = {std::filesystem::absolute("src"), std::filesystem::absolute("tests"), std::filesystem::absolute("test"), std::filesystem::absolute(".gitignore"), std::filesystem::absolute(".github"), std::filesystem::absolute("main.cpp"), std::filesystem::absolute(".git"), std::filesystem::absolute("build")};
     for (int i = 0; i < files.size(); i++)
     {
         CHECK(collapsedcd->files[i]->name == files[i]);
@@ -49,9 +50,9 @@ TEST_CASE("List test directory")
 
 TEST_CASE("Check permission on high perms folder")
 {
-    CHECK(!CanRead(GetCurrentUser(), "/home/rt/tools/tests/highpermfolder"));
-    CHECK(!CanWrite(GetCurrentUser(), "/home/rt/tools/tests/highpermfolder"));
-    CHECK(!CanExecute(GetCurrentUser(), "/home/rt/tools/tests/highpermfolder"));
+    CHECK(!CanRead(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder")));
+    CHECK(!CanWrite(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder")));
+    CHECK(!CanExecute(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder")));
 }
 
 TEST_CASE("Check listing high perm folder produces correct error")
