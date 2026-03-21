@@ -52,5 +52,9 @@ jobs:
 
       - name: Run tests
         run: |
-          chmod o+rx $PWD $PWD/build
-          sudo -u testuser $PWD/build/testtool
+          path=$PWD
+          while [ "$path" != "/" ]; do
+            chmod o+rx "$path"
+            path=$(dirname "$path")
+          done
+          sudo -u testuser bash -c "cd $PWD && ./build/testtool"
