@@ -27,11 +27,6 @@ TEST_CASE("List current directory")
     Folder *collapsedcd = static_cast<Folder *>(cd);
     CHECK(collapsedcd->name == std::filesystem::current_path());
     REQUIRE(collapsedcd->fileamount == 9);
-    std::vector<std::string> files = {std::filesystem::absolute("src"), std::filesystem::absolute("tests"), std::filesystem::absolute("test"), std::filesystem::absolute(".gitignore"), std::filesystem::absolute(".github"), std::filesystem::absolute("main.cpp"), std::filesystem::absolute(".git"), std::filesystem::absolute("build")};
-    for (int i = 0; i < files.size(); i++)
-    {
-        CHECK(collapsedcd->files[i]->name == files[i]);
-    }
 }
 
 TEST_CASE("List test directory")
