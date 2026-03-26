@@ -64,3 +64,8 @@ TEST_CASE("Check listing low perm folder in high perm folder produces correct er
 {
     CHECK_THROWS_AS(ListDirectory(std::filesystem::absolute("tests/highpermfolder/folder")), ExecuteNotPermitted);
 }
+
+TEST_CASE("Checks if you can grab groups")
+{
+    (void)GetGroups();
+}

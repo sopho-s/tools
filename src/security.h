@@ -14,6 +14,7 @@ struct User {
 
 /// @brief Represents a system group and its member users
 struct Group {
+    int groupid;
     std::string name;       ///< Group name
     User* usersingroup;     ///< Array of users belonging to this group
     int groupsize;          ///< Number of users in the group

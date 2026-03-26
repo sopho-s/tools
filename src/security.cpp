@@ -2,6 +2,7 @@
 #include "command.h"
 #include <vector>
 #include <filesystem>
+#include <fstream>
 #include <sys/stat.h>
 #include <pwd.h>
 
@@ -13,9 +14,11 @@ std::vector<std::string> split(std::string s, std::string delim)
     {
         pos = s.find(delim);
         if (pos == -1) {
+            std::cout << s << std::endl;
             res.push_back(s);
             break;
         }
+        std::cout << s.substr(0, pos) << std::endl;
         res.push_back(s.substr(0, pos));
         s.erase(0, pos + delim.size());
     }
@@ -160,5 +163,104 @@ User GetUser(std::string user)
     userobj.groupamount = groupsvec.size();
     return userobj;
 }
-std::vector<Group> GetGroups();
-Group GetGroup(std::string group);
+std::vector<Group> GetGroups() {
+    std::string directory = "/etc/group";
+    try {
+        if (!std::filesystem::exists(directory))
+        {
+            throw FileDoesntExist("Specified file or directory does not exist");
+        }
+    } catch (const std::filesystem::filesystem_error &e) {
+        throw AccessNotPermitted("Invalid permissions to access /etc/group file");
+    }
+    std::filesystem::directory_entry filetoread = std::filesystem::directory_entry(directory);
+    switch (std::filesystem::status(directory).type())
+    {
+    case std::filesystem::file_type::regular:
+    {
+        if (!CanRead(GetCurrentUser(), directory)) {
+            throw ReadNotPermitted("Invalid permissions to read /etc/group file");
+        }
+        break;
+    }
+    default:
+    {
+        throw Unsupported("/etc/group is of a file type that is unsupported");
+        break;
+    }
+    }
+    std::ifstream file("/etc/group");
+    std::string line;
+    std::vector<Group> groups;
+    while (std::getline(file, line)) {
+        std::vector<std::string> group = split(line, ":");
+        std::vector<User> groupusers;
+        for (int i = 3; i < group.size(); i++) {
+            if (group[i] == "") {
+                break;
+            }
+            groupusers.push_back(GetUser(group[i]));
+        }
+        Group groupobj = Group();
+        groupobj.groupsize = groupusers.size();
+        groupobj.usersingroup = new User[groupusers.size()];
+        for (int i = 0; i < groupusers.size(); i++) {
+            groupobj.usersingroup[i] = groupusers[i];
+        }
+        groupobj.groupid = std::stoi(group[2]);
+        groupobj.name = group[0];
+        groups.push_back(groupobj);
+    }
+    return groups;
+}
+Group GetGroup(std::string groupstr) {
+    std::string directory = "/etc/group";
+    try {
+        if (!std::filesystem::exists(directory))
+        {
+            throw FileDoesntExist("Specified file or directory does not exist");
+        }
+    } catch (const std::filesystem::filesystem_error &e) {
+        throw AccessNotPermitted("Invalid permissions to access /etc/group file");
+    }
+    std::filesystem::directory_entry filetoread = std::filesystem::directory_entry(directory);
+    switch (std::filesystem::status(directory).type())
+    {
+    case std::filesystem::file_type::regular:
+    {
+        if (!CanRead(GetCurrentUser(), directory)) {
+            throw ReadNotPermitted("Invalid permissions to read /etc/group file");
+        }
+        break;
+    }
+    default:
+    {
+        throw Unsupported("/etc/group is of a file type that is unsupported");
+        break;
+    }
+    }
+    std::ifstream file("/etc/group");
+    std::string line;
+    while (std::getline(file, line)) {
+        std::vector<std::string> group = split(line, ":");
+        if (group[0] == groupstr) {
+            std::vector<User> groupusers;
+            for (int i = 3; i < group.size(); i++) {
+                if (group[i] == "") {
+                    break;
+                }
+                groupusers.push_back(GetUser(group[i]));
+            }
+            Group groupobj = Group();
+            groupobj.groupsize = groupusers.size();
+            groupobj.usersingroup = new User[groupusers.size()];
+            for (int i = 0; i < groupusers.size(); i++) {
+                groupobj.usersingroup[i] = groupusers[i];
+            }
+            groupobj.groupid = std::stoi(group[2]);
+            groupobj.name = group[0];
+            return groupobj;
+        }
+    }
+    throw PermissionObjectDoesntExist("Specified group does not exist");
+}

@@ -72,3 +72,15 @@ class AccessNotPermitted : public std::exception {
             return message.c_str();
         }
 };
+
+
+class PermissionObjectDoesntExist : public std::exception {
+    private:
+        std::string message;
+    public:
+        PermissionObjectDoesntExist(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
