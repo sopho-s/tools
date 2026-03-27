@@ -14,11 +14,9 @@ std::vector<std::string> split(std::string s, std::string delim)
     {
         pos = s.find(delim);
         if (pos == -1) {
-            std::cout << s << std::endl;
             res.push_back(s);
             break;
         }
-        std::cout << s.substr(0, pos) << std::endl;
         res.push_back(s.substr(0, pos));
         s.erase(0, pos + delim.size());
     }

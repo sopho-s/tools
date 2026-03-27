@@ -49,7 +49,13 @@ FileObject *GetFile(std::string directory)
     }
     return nullptr;
 }
-FileObject **GetFiles(std::string *directories, int amount);
+FileObject **GetFiles(std::string *directories, int amount) {
+    FileObject** files = new FileObject*[amount]; 
+    for (int i = 0; i < amount; i++) {
+        files[i] = GetFile(directories[i]);
+    }
+    return files;
+}
 FileObject *ReadFile(std::string directory) {
     try {
         if (!std::filesystem::exists(directory))
@@ -105,13 +111,35 @@ FileObject *ListDirectory(std::string directory)
     currentdir = collapseddir;
     return currentdir;
 }
-FileObject *ListDirectoryRecursive(std::string directory, int depth);
+FileObject *ListDirectoryRecursive(std::string directory, int depth) {
+    if (depth > 0) {
+        if (GetFile(directory)->isfile) {
+            return GetFile(directory);
+        }
+        FileObject* currdir;
+        try {
+            currdir = ListDirectory(directory);
+        } catch (const ExecuteNotPermitted &e) {
+            ;
+        } catch (const AccessNotPermitted &e) {
+            ;
+        }
+        Folder* folder = static_cast<Folder *>(currdir);
+        for (int i = 0; i < folder->fileamount; i++) {
+            folder->files[i] = ListDirectoryRecursive(folder->files[i]->name, depth - 1);
+        }
+        return currdir;
+    }
+    return GetFile(directory);
+}
 FileObject *ListCurrentDirectory()
 {
     std::string currentdirname = GetCurrentDirectory();
     return ListDirectory(currentdirname);
 }
-FileObject *ListCurrentDirectoryRecursive(std::string directory, int depth);
+FileObject *ListCurrentDirectoryRecursive(int depth) {
+    return ListDirectoryRecursive(GetCurrentDirectory(), depth);
+}
 
 void RemoveFile(std::string directory);
 void AddFile(std::string directory, FileObject file);

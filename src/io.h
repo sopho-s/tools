@@ -75,10 +75,9 @@ std::string GetAbsoluteDirectory(std::string directory);
 FileObject* ListCurrentDirectory();
 
 /// @brief Lists entries in the current working directory up to a given depth
-/// @param directory Root directory path to start from
 /// @param depth Maximum recursion depth
 /// @return Pointer to a FileObject representing the directory tree
-FileObject* ListCurrentDirectoryRecursive(std::string directory, int depth);
+FileObject* ListCurrentDirectoryRecursive(int depth);
 
 /// @brief Lists entries in the specified directory (non-recursive)
 /// @param directory Path to the directory to list
