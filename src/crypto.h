@@ -19,9 +19,18 @@ inline char GFInv(char a);
 inline char AffineTransform(char b);
 inline char* GetSBox();
 
+void ExpandRoundKey128(char *key);
+
+void AddRoundKey128(char *data, char* key);
 void SubBytes128(char *data, char sbox[]);
 void ShiftRows128(char *data);
+void MixColumns128(char *data);
 void EncryptAES128(char* data);
+
+void InvSubBytes128(char *data, char sbox[]);
+void InvShiftRows128(char *data);
+void InvMixColumns128(char *data);
+void DecryptAES128(char* data);
 
 void CTRDRBGUpdate(AESState &state, uint8_t seedmaterial[]);
 AESState AESPRNGInit(uint32_t seed);

@@ -70,6 +70,16 @@ inline char* GetSBox() {
     return sbox;
 }
 
+void ExpandRoundKey128(char *key) {
+    
+}
+
+void AddRoundKey128(char *data, char* key) {
+    for (int i = 0; i < 16; i++) {
+        data[i] ^= key[i];
+    }
+}
+
 void SubBytes128(char *data, char sbox[]) {
     for (int i = 0; i < 16; i++) {
         data[i] = sbox[(size_t)data];
@@ -81,6 +91,19 @@ void ShiftRows128(char *data) {
         char copy[] = {data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]};
         for (int t = 0; t < 4; t++) {
             data[i * 4 + (t + i) % 4] = copy[t];
+        }
+    }
+}
+
+void MixColumns128(char *data) {
+    char state[4] = {2, 3, 1, 1};
+    for (int i = 0; i < 4; i++) {
+        for (int t = 0; t < 4; t++) {
+            data[t] ^= GFMult(data[t], data[i + t*4]);
+        }
+        char copy[4] = {state[0], state[1], state[2], state[3]};
+        for (int t = 0; t < 4; t++) {
+            state[(t + 1) % 4] = copy[t];
         }
     }
 }
