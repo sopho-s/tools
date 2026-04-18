@@ -6,6 +6,8 @@
 #include <pwd.h>
 #include <unistd.h>
 #include "exceptions.h"
+#include "command.h"
+#include "util.h"
 #pragma once
 
 /// @brief Represents a system user with identity and group membership information

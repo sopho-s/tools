@@ -1,22 +1,10 @@
 #include "security.h"
+#include <vector>
+#include <filesystem>
+#include <fstream>
+#include <sys/stat.h>
+#include <pwd.h>
 #include "command.h"
-
-std::vector<std::string> split(std::string s, std::string delim)
-{
-    std::vector<std::string> res;
-    int pos = 0;
-    while (true)
-    {
-        pos = s.find(delim);
-        if (pos == -1) {
-            res.push_back(s);
-            break;
-        }
-        res.push_back(s.substr(0, pos));
-        s.erase(0, pos + delim.size());
-    }
-    return res;
-}
 
 
 
