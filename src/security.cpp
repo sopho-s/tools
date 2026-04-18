@@ -1,10 +1,5 @@
 #include "security.h"
 #include "command.h"
-#include <vector>
-#include <filesystem>
-#include <fstream>
-#include <sys/stat.h>
-#include <pwd.h>
 
 std::vector<std::string> split(std::string s, std::string delim)
 {
@@ -22,6 +17,15 @@ std::vector<std::string> split(std::string s, std::string delim)
     }
     return res;
 }
+
+
+
+bool AmIRoot() {
+    return geteuid() == 0;
+}
+
+void SetFilePermissions(std::string directory, int perms);
+void SetFileOwner(std::string directory, std::string owner);
 
 bool IsOwner(User user, std::string file)
 {

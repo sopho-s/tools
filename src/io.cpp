@@ -7,6 +7,10 @@ std::string GetCurrentDirectory()
     currentdir = std::filesystem::current_path().string();
     return currentdir;
 }
+std::string GetParentDirectory(std::string directory)
+{
+    return std::filesystem::absolute(directory).parent_path();
+}
 std::string GetAbsoluteDirectory(std::string directory)
 {
     std::string absolutedir = "";
@@ -16,12 +20,15 @@ std::string GetAbsoluteDirectory(std::string directory)
 
 FileObject *GetFile(std::string directory)
 {
-    try {
+    try
+    {
         if (!std::filesystem::exists(directory))
         {
             throw FileDoesntExist("Specified file or directory does not exist");
         }
-    } catch (const std::filesystem::filesystem_error &e) {
+    }
+    catch (const std::filesystem::filesystem_error &e)
+    {
         throw AccessNotPermitted("Invalid permissions to access file");
     }
     std::filesystem::directory_entry dirtocheck = std::filesystem::directory_entry(directory);
@@ -49,20 +56,26 @@ FileObject *GetFile(std::string directory)
     }
     return nullptr;
 }
-FileObject **GetFiles(std::string *directories, int amount) {
-    FileObject** files = new FileObject*[amount]; 
-    for (int i = 0; i < amount; i++) {
+FileObject **GetFiles(std::string *directories, int amount)
+{
+    FileObject **files = new FileObject *[amount];
+    for (int i = 0; i < amount; i++)
+    {
         files[i] = GetFile(directories[i]);
     }
     return files;
 }
-FileObject *ReadFile(std::string directory) {
-    try {
+FileObject *ReadFile(std::string directory)
+{
+    try
+    {
         if (!std::filesystem::exists(directory))
         {
             throw FileDoesntExist("Specified file or directory does not exist");
         }
-    } catch (const std::filesystem::filesystem_error &e) {
+    }
+    catch (const std::filesystem::filesystem_error &e)
+    {
         throw AccessNotPermitted("Invalid permissions to access file");
     }
     std::filesystem::directory_entry filetoread = std::filesystem::directory_entry(directory);
@@ -74,7 +87,8 @@ FileObject *ReadFile(std::string directory) {
         file->isfile = true;
         file->name = directory;
         file->permissions = static_cast<int>(std::filesystem::status(directory).permissions());
-        if (!CanRead(GetCurrentUser(), directory)) {
+        if (!CanRead(GetCurrentUser(), directory))
+        {
             throw ReadNotPermitted("Invalid permissions to read file");
         }
         return file;
@@ -85,11 +99,20 @@ FileObject *ReadFile(std::string directory) {
     }
     }
 }
-FileObject **ReadFiles(std::string *directories, int amount);
+FileObject **ReadFiles(std::string *directories, int amount)
+{
+    FileObject **files = new FileObject *[amount];
+    for (int i = 0; i < amount; i++)
+    {
+        files[i] = ReadFile(directories[i]);
+    }
+    return files;
+}
 
 FileObject *ListDirectory(std::string directory)
 {
-    if (!CanExecute(GetCurrentUser(), directory)) {
+    if (!CanExecute(GetCurrentUser(), directory))
+    {
         throw ExecuteNotPermitted("Invalid permissions to list directory");
     }
     FileObject *currentdir = GetFile(directory);
@@ -111,21 +134,30 @@ FileObject *ListDirectory(std::string directory)
     currentdir = collapseddir;
     return currentdir;
 }
-FileObject *ListDirectoryRecursive(std::string directory, int depth) {
-    if (depth > 0) {
-        if (GetFile(directory)->isfile) {
+FileObject *ListDirectoryRecursive(std::string directory, int depth)
+{
+    if (depth > 0)
+    {
+        if (GetFile(directory)->isfile)
+        {
             return GetFile(directory);
         }
-        FileObject* currdir;
-        try {
+        FileObject *currdir;
+        try
+        {
             currdir = ListDirectory(directory);
-        } catch (const ExecuteNotPermitted &e) {
-            ;
-        } catch (const AccessNotPermitted &e) {
+        }
+        catch (const ExecuteNotPermitted &e)
+        {
             ;
         }
-        Folder* folder = static_cast<Folder *>(currdir);
-        for (int i = 0; i < folder->fileamount; i++) {
+        catch (const AccessNotPermitted &e)
+        {
+            ;
+        }
+        Folder *folder = static_cast<Folder *>(currdir);
+        for (int i = 0; i < folder->fileamount; i++)
+        {
             folder->files[i] = ListDirectoryRecursive(folder->files[i]->name, depth - 1);
         }
         return currdir;
@@ -137,13 +169,86 @@ FileObject *ListCurrentDirectory()
     std::string currentdirname = GetCurrentDirectory();
     return ListDirectory(currentdirname);
 }
-FileObject *ListCurrentDirectoryRecursive(int depth) {
+FileObject *ListCurrentDirectoryRecursive(int depth)
+{
     return ListDirectoryRecursive(GetCurrentDirectory(), depth);
 }
 
-void RemoveFile(std::string directory);
-void AddFile(std::string directory, FileObject file);
-void ModifyFile(std::string directory, FileObject file);
+void RemoveFile(std::string directory)
+{
+    std::string parentdirectory = GetParentDirectory(directory);
+    if (!CanWrite(GetCurrentUser(), parentdirectory))
+    {
+        throw WriteNotPermitted("Cannot delete directory as you cannot write to the parent");
+    }
+    if (!CanExecute(GetCurrentUser(), parentdirectory))
+    {
+        throw ExecuteNotPermitted("Cannot delete directory as you cannot execute the parent");
+    }
+    GetFile(directory);
+    int status = std::remove(directory.c_str());
+    if (status != 0)
+    {
+        throw std::runtime_error("IDFK");
+    }
+}
+void AddFile(std::string directory, FileObject *file)
+{
+    std::string parentdirectory = GetParentDirectory(directory);
+    if (!CanWrite(GetCurrentUser(), parentdirectory))
+    {
+        throw WriteNotPermitted("Cannot delete directory as you cannot write to the parent");
+    }
+    if (!CanExecute(GetCurrentUser(), parentdirectory))
+    {
+        throw ExecuteNotPermitted("Cannot delete directory as you cannot execute the parent");
+    }
+    try
+    {
+        GetFile(directory);
+    }
+    catch (const FileDoesntExist &e)
+    {
+        if (file->isfile)
+        {
+            File *collapsedfile = static_cast<File *>(file);
+            if (collapsedfile->retrievedcontent)
+            {
+                std::ofstream fd(directory);
+                fd << collapsedfile->contents;
+                fd.close();
+            }
+        }
+        else
+        {
+            Folder *collapsedfolder = static_cast<Folder *>(file);
+            std::filesystem::create_directories(directory);
+        }
+    }
+}
+void ModifyFile(std::string directory, FileObject *file)
+{
+    std::string parentdirectory = GetParentDirectory(directory);
+    if (!CanWrite(GetCurrentUser(), parentdirectory))
+    {
+        throw WriteNotPermitted("Cannot delete directory as you cannot write to the parent");
+    }
+    if (!CanExecute(GetCurrentUser(), parentdirectory))
+    {
+        throw ExecuteNotPermitted("Cannot delete directory as you cannot execute the parent");
+    }
+    GetFile(directory);
+    if (file->isfile)
+    {
+        File *collapsedfile = static_cast<File *>(file);
+        if (collapsedfile->retrievedcontent)
+        {
+            std::ofstream fd(directory);
+            fd << collapsedfile->contents;
+            fd.close();
+        }
+    }
+}
 
 void MoveDirectory(std::string directory)
 {

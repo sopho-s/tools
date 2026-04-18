@@ -1,5 +1,10 @@
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <fstream>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <unistd.h>
 #include "exceptions.h"
 #pragma once
 
@@ -19,6 +24,13 @@ struct Group {
     User* usersingroup;     ///< Array of users belonging to this group
     int groupsize;          ///< Number of users in the group
 };
+
+bool AmIRoot();
+
+
+
+void SetFilePermissions(std::string directory, int perms);
+void SetFileOwner(std::string directory, std::string owner);
 
 /// @brief Checks whether the given user is the owner of a file
 /// @param user The user to check

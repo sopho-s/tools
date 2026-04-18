@@ -61,6 +61,10 @@ bool DoIHaveValidPermissions(std::string directory, bool read = false, bool writ
 /// @return Absolute path of the current directory
 std::string GetCurrentDirectory();
 
+/// @brief Returns the parent directory of the absolute path
+/// @return Parent directory of the absolute directory of the directory specificied
+std::string GetParentDirectory(std::string directory);
+
 /// @brief Resolves a relative path to an absolute path
 /// @param directory The relative or partial directory path
 /// @return The absolute path string
@@ -130,12 +134,12 @@ void RemoveFile(std::string directory);
 /// @brief Creates a new file at the specified path
 /// @param directory Path where the file should be created
 /// @param file FileObject describing the file to add
-void AddFile(std::string directory, FileObject file);
+void AddFile(std::string directory, FileObject *file);
 
 /// @brief Overwrites an existing file with new data
 /// @param directory Path to the file to modify
 /// @param file FileObject containing the updated data
-void ModifyFile(std::string directory, FileObject file);
+void ModifyFile(std::string directory, FileObject *file);
 
 /// @brief Moves a directory to a new location
 /// @param directory Destination path for the directory

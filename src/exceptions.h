@@ -61,6 +61,18 @@ class ExecuteNotPermitted : public std::exception {
         }
 };
 
+/// @brief Thrown when trying to write to a file without the correct permissions
+class WriteNotPermitted : public std::exception {
+    private:
+        std::string message;
+    public:
+        WriteNotPermitted(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
+
 /// @brief Thrown when trying to access a file but it was unknown where in the folder chain it was that blocked you from accessing the file
 class AccessNotPermitted : public std::exception {
     private:
