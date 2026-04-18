@@ -1,1 +1,1 @@
-add_library(toollib exceptions.h io.h io.cpp security.h security.cpp command.h command.cpp)
+add_library(toollib exceptions.h io.h io.cpp security.h security.cpp command.h command.cpp crypto.h crypto.cpp util.h util.cpp)
