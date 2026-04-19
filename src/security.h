@@ -17,6 +17,9 @@ struct User {
     std::string name;    ///< Username
     std::pair<int, std::string>* groups; ///< Array of (gid, name) pairs for all groups the user belongs to
     int groupamount;     ///< Number of entries in the groups array
+    ~User() {
+        delete[] groups;
+    }
 };
 
 /// @brief Represents a system group and its member users
@@ -25,6 +28,9 @@ struct Group {
     std::string name;       ///< Group name
     User* usersingroup;     ///< Array of users belonging to this group
     int groupsize;          ///< Number of users in the group
+    ~Group() {
+        delete usersingroup;
+    }
 };
 
 bool AmIRoot();

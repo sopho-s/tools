@@ -1,6 +1,7 @@
 #include <cstring>
 #include <vector>
 #include <string>
+#pragma once
 template <typename T>
 T* PadTo(T* data, int curramount, int finalamount, T padval);
 

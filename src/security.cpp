@@ -27,6 +27,7 @@ bool IsOwner(User user, std::string file)
     }
     return false;
 }
+
 bool IsGroupOwner(User user, std::string file)
 {
     struct stat info;
@@ -145,7 +146,7 @@ User GetUser(std::string user)
     userobj.name = split(split(split(output, " ")[0], "(")[1], ")")[0];
     std::string groups = split(output, "groups=")[1];
     std::vector<std::string> groupsvec = split(groups, "),");
-    userobj.groups = new std::pair<int, std::string>[groups.size()];
+    userobj.groups = new std::pair<int, std::string>[groupsvec.size()];
     for (int i = 0; i < groupsvec.size(); i++)
     {
         userobj.groups[i] = std::make_pair(std::stoi(split(groupsvec[i], "(")[0]), split(groupsvec[i], "(")[1]);

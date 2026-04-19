@@ -1,6 +1,10 @@
 #include <cstdint>
 #include <cstring>
 
+#pragma once
+#define WORDSIZE 4
+#define ROUNDAMOUNT 11
+
 template <typename T>
 T* EncryptXOR(T* data, T key, int amount);
 template <typename T>
@@ -14,23 +18,23 @@ struct AESState {
     uint64_t reseedcounter = 0;
 };
 
-inline char GFMult(char a, char b);
-inline char GFInv(char a);
-inline char AffineTransform(char b);
-inline char* GetSBox();
+unsigned char GFMult(unsigned char a, unsigned char b);
+unsigned char GFInv(unsigned char a);
+unsigned char AffineTransform(unsigned char b);
+unsigned char* GetSBox();
 
-void ExpandRoundKey128(char *key);
+unsigned char* ExpandRoundKey128(unsigned char *key);
 
-void AddRoundKey128(char *data, char* key);
-void SubBytes128(char *data, char sbox[]);
-void ShiftRows128(char *data);
-void MixColumns128(char *data);
-void EncryptAES128(char* data);
+void AddRoundKey128(unsigned char *data, unsigned char* key);
+void SubBytes128(unsigned char *data, unsigned char sbox[]);
+void ShiftRows128(unsigned char *data);
+void MixColumns128(unsigned char *data);
+void EncryptAES128(unsigned char* data, unsigned char* key);
 
-void InvSubBytes128(char *data, char sbox[]);
-void InvShiftRows128(char *data);
-void InvMixColumns128(char *data);
-void DecryptAES128(char* data);
+void InvSubBytes128(unsigned char *data, unsigned char sbox[]);
+void InvShiftRows128(unsigned char *data);
+void InvMixColumns128(unsigned char *data);
+void DecryptAES128(unsigned char* data);
 
 void CTRDRBGUpdate(AESState &state, uint8_t seedmaterial[]);
 AESState AESPRNGInit(uint32_t seed);

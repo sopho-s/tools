@@ -89,6 +89,7 @@ FileObject *ReadFile(std::string directory)
         file->permissions = static_cast<int>(std::filesystem::status(directory).permissions());
         if (!CanRead(GetCurrentUser(), directory))
         {
+            delete file;
             throw ReadNotPermitted("Invalid permissions to read file");
         }
         return file;
@@ -123,7 +124,7 @@ FileObject *ListDirectory(std::string directory)
         FileObject *currentfile = GetFile(path);
         files.push_back(currentfile);
     }
-    Folder *collapseddir = new Folder();
+    Folder *collapseddir;
     collapseddir = static_cast<Folder *>(currentdir);
     collapseddir->files = new FileObject *[files.size()];
     for (int i = 0; i < files.size(); i++)
@@ -131,6 +132,7 @@ FileObject *ListDirectory(std::string directory)
         collapseddir->files[i] = files[i];
     }
     collapseddir->fileamount = files.size();
+    delete currentdir;
     currentdir = collapseddir;
     return currentdir;
 }

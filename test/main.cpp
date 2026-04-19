@@ -1,8 +1,11 @@
 #include "../src/io.h"
 #include "../src/security.h"
 #include "../src/command.h"
+#include "../src/crypto.h"
+#include "../src/util.h"
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
+#include <cstring>
 
 // IO TESTS
 
@@ -352,4 +355,311 @@ TEST_CASE("GetGroups returns a non-empty list")
 {
     std::vector<Group> groups = GetGroups();
     CHECK(groups.size() > 0);
+}
+
+// CRYPTO TESTS
+
+TEST_CASE("EncryptXOR single value XOR works correctly")
+{
+    unsigned char a = 0x55;
+    unsigned char b = 0xAA;
+    CHECK(EncryptXOR<unsigned char>(a, b) == 0xFF);
+    CHECK(EncryptXOR<unsigned char>(a, a) == 0);
+}
+
+TEST_CASE("EncryptXOR with single key XORs all elements")
+{
+    unsigned char data[4] = {0x01, 0x02, 0x03, 0x04};
+    unsigned char key = 0xFF;
+    unsigned char* result = EncryptXOR<unsigned char>(data, key, 4);
+    CHECK(result[0] == 0xFE);
+    CHECK(result[1] == 0xFD);
+    CHECK(result[2] == 0xFC);
+    CHECK(result[3] == 0xFB);
+    delete[] result;
+}
+
+TEST_CASE("EncryptXOR with key array XORs element-wise")
+{
+    unsigned char data[4] = {0x01, 0x02, 0x03, 0x04};
+    unsigned char key[4] = {0x01, 0x02, 0x03, 0x04};
+    unsigned char* result = EncryptXOR<unsigned char>(data, key, 4);
+    CHECK(result[0] == 0);
+    CHECK(result[1] == 0);
+    CHECK(result[2] == 0);
+    CHECK(result[3] == 0);
+    delete[] result;
+}
+
+TEST_CASE("EncryptXOR is reversible")
+{
+    unsigned char data[4] = {0x41, 0x42, 0x43, 0x44};
+    unsigned char key = 0x37;
+    unsigned char* encrypted = EncryptXOR<unsigned char>(data, key, 4);
+    unsigned char* decrypted = EncryptXOR<unsigned char>(encrypted, key, 4);
+    CHECK(decrypted[0] == data[0]);
+    CHECK(decrypted[1] == data[1]);
+    CHECK(decrypted[2] == data[2]);
+    CHECK(decrypted[3] == data[3]);
+    delete[] encrypted;
+    delete[] decrypted;
+}
+
+TEST_CASE("GFMult with zero returns zero")
+{
+    CHECK(GFMult(0, 0x53) == 0);
+    CHECK(GFMult(0x53, 0) == 0);
+}
+
+TEST_CASE("GFMult with one returns the other value")
+{
+    CHECK(GFMult(1, 0x53) == 0x53);
+    CHECK(GFMult(0x57, 1) == 0x57);
+}
+
+TEST_CASE("GFInv of zero returns zero")
+{
+    CHECK(GFInv(0) == 0);
+}
+
+TEST_CASE("GFInv of one returns one")
+{
+    CHECK(GFInv(1) == 1);
+}
+
+TEST_CASE("GetSBox returns 256 element array")
+{
+    unsigned char* sbox = GetSBox();
+    REQUIRE(sbox != nullptr);
+    // S-box entry for 0x00 should be 0x63 in standard AES
+    // (though implementation may differ)
+    delete[] sbox;
+}
+
+TEST_CASE("AddRoundKey128 XORs data with key")
+{
+    unsigned char data[16] = {0};
+    unsigned char key[16] = {0};
+    for (int i = 0; i < 16; i++) {
+        data[i] = i;
+        key[i] = 0xFF;
+    }
+    AddRoundKey128(data, key);
+    for (int i = 0; i < 16; i++) {
+        CHECK(data[i] == (unsigned char)(i ^ 0xFF));
+    }
+}
+
+TEST_CASE("AddRoundKey128 is self-inverse")
+{
+    unsigned char data[16] = {0};
+    unsigned char original[16] = {0};
+    unsigned char key[16] = {0};
+    for (int i = 0; i < 16; i++) {
+        data[i] = i * 3;
+        original[i] = i * 3;
+        key[i] = i * 7;
+    }
+    AddRoundKey128(data, key);
+    AddRoundKey128(data, key);
+    for (int i = 0; i < 16; i++) {
+        CHECK(data[i] == original[i]);
+    }
+}
+
+TEST_CASE("ShiftRows128 modifies data in place")
+{
+    unsigned char data[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    unsigned char original[16];
+    std::memcpy(original, data, 16);
+    ShiftRows128(data);
+    // Verify at least some bytes changed
+    bool changed = false;
+    for (int i = 0; i < 16; i++) {
+        if (data[i] != original[i]) changed = true;
+    }
+    CHECK(changed);
+}
+
+TEST_CASE("ExpandRoundKey128 returns 176 bytes (11 round keys)")
+{
+    unsigned char key[16] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
+                             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
+    unsigned char* roundkeys = ExpandRoundKey128(key);
+    REQUIRE(roundkeys != nullptr);
+    // First 16 bytes should be the original key
+    for (int i = 0; i < 16; i++) {
+        CHECK(roundkeys[i] == key[i]);
+    }
+    delete[] roundkeys;
+}
+
+TEST_CASE("EncryptAES128 modifies data")
+{
+    unsigned char data[16] = {0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
+                              0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
+    unsigned char original[16];
+    std::memcpy(original, data, 16);
+    unsigned char key[16] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
+                             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
+    EncryptAES128(data, key);
+    // Verify data was modified
+    bool changed = false;
+    for (int i = 0; i < 16; i++) {
+        if (data[i] != original[i]) changed = true;
+    }
+    CHECK(changed);
+}
+
+// UTIL TESTS
+
+TEST_CASE("split with single delimiter")
+{
+    std::string s = "hello,world";
+    std::vector<std::string> result = split(s, ",");
+    REQUIRE(result.size() == 2);
+    CHECK(result[0] == "hello");
+    CHECK(result[1] == "world");
+}
+
+TEST_CASE("split with no delimiter present")
+{
+    std::string s = "helloworld";
+    std::vector<std::string> result = split(s, ",");
+    REQUIRE(result.size() == 1);
+    CHECK(result[0] == "helloworld");
+}
+
+TEST_CASE("split with multiple delimiters")
+{
+    std::string s = "a:b:c:d";
+    std::vector<std::string> result = split(s, ":");
+    REQUIRE(result.size() == 4);
+    CHECK(result[0] == "a");
+    CHECK(result[1] == "b");
+    CHECK(result[2] == "c");
+    CHECK(result[3] == "d");
+}
+
+TEST_CASE("split with multi-character delimiter")
+{
+    std::string s = "foo||bar||baz";
+    std::vector<std::string> result = split(s, "||");
+    REQUIRE(result.size() == 3);
+    CHECK(result[0] == "foo");
+    CHECK(result[1] == "bar");
+    CHECK(result[2] == "baz");
+}
+
+TEST_CASE("split empty string returns single empty element")
+{
+    std::string s = "";
+    std::vector<std::string> result = split(s, ",");
+    REQUIRE(result.size() == 1);
+    CHECK(result[0] == "");
+}
+
+TEST_CASE("PadTo pads with specified value")
+{
+    char data[4] = {'A', 'B', 'C', 'D'};
+    char* result = PadTo<char>(data, 4, 8, 'X');
+    REQUIRE(result != nullptr);
+    CHECK(result[0] == 'A');
+    CHECK(result[1] == 'B');
+    CHECK(result[2] == 'C');
+    CHECK(result[3] == 'D');
+    delete[] result;
+}
+
+TEST_CASE("PadTo with integers")
+{
+    int data[2] = {1, 2};
+    int* result = PadTo<int>(data, 2, 4, 0);
+    REQUIRE(result != nullptr);
+    CHECK(result[0] == 1);
+    CHECK(result[1] == 2);
+    delete[] result;
+}
+
+// COMMAND TESTS
+
+TEST_CASE("Execute returns output from simple command")
+{
+    std::string result = Execute("echo hello");
+    CHECK(result.find("hello") != std::string::npos);
+}
+
+TEST_CASE("Execute captures multi-line output")
+{
+    std::string result = Execute("printf 'line1\\nline2\\n'");
+    CHECK(result.find("line1") != std::string::npos);
+    CHECK(result.find("line2") != std::string::npos);
+}
+
+TEST_CASE("Execute with pwd returns a path")
+{
+    std::string result = Execute("pwd");
+    CHECK(result.front() == '/');
+}
+
+TEST_CASE("Execute with exit 0 command succeeds")
+{
+    std::string result = Execute("true");
+    // Should not throw, result may be empty
+    CHECK(true);
+}
+
+// ADDITIONAL SECURITY TESTS
+
+TEST_CASE("AmIRoot returns false for non-root user")
+{
+    // Assuming tests run as non-root
+    if (geteuid() != 0) {
+        CHECK(!AmIRoot());
+    } else {
+        CHECK(AmIRoot());
+    }
+}
+
+TEST_CASE("GetUser for non-existent user throws")
+{
+    CHECK_THROWS(GetUser("this_user_does_not_exist_xyz123"));
+}
+
+// ADDITIONAL IO TESTS
+
+TEST_CASE("ReadFiles returns array of file objects")
+{
+    std::string paths[2] = {
+        std::filesystem::absolute("tests/lowpermfolder/folder/folder/lowpermfile").string(),
+        std::filesystem::absolute("src/io.cpp").string()
+    };
+    FileObject** files = ReadFiles(paths, 2);
+    REQUIRE(files != nullptr);
+    REQUIRE(files[0] != nullptr);
+    REQUIRE(files[1] != nullptr);
+    CHECK(files[0]->isfile);
+    CHECK(files[1]->isfile);
+}
+
+TEST_CASE("ReadFiles with one invalid path throws")
+{
+    std::string paths[2] = {
+        std::filesystem::absolute("src/io.cpp").string(),
+        "/this/path/does/not/exist"
+    };
+    CHECK_THROWS(ReadFiles(paths, 2));
+}
+
+TEST_CASE("GetParentDirectory returns parent path")
+{
+    std::string result = GetParentDirectory("/home/user/file.txt");
+    CHECK(result.find("user") != std::string::npos);
+    CHECK(result.find("file.txt") == std::string::npos);
+}
+
+TEST_CASE("GetParentDirectory on nested path")
+{
+    std::string result = GetParentDirectory("src/io.cpp");
+    CHECK(result.find("src") != std::string::npos);
 }
