@@ -96,3 +96,60 @@ class PermissionObjectDoesntExist : public std::exception {
             return message.c_str();
         }
 };
+
+// NETWORKING ERRORS
+
+class SocketFailedToOpen : public std::exception {
+    private:
+        std::string message;
+    public:
+        SocketFailedToOpen(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
+
+class NoIntefaceIndex : public std::exception {
+    private:
+        std::string message;
+    public:
+        NoIntefaceIndex(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
+
+class BindError : public std::exception {
+    private:
+        std::string message;
+    public:
+        BindError(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
+
+class PacketReceiveError : public std::exception {
+    private:
+        std::string message;
+    public:
+        PacketReceiveError(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
+
+class PacketSendError : public std::exception {
+    private:
+        std::string message;
+    public:
+        PacketSendError(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
