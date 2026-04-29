@@ -5,7 +5,7 @@ RawSocket::RawSocket() {
 }
 
 RawSocket::RawSocket(const std::string &interface) {
-    this->fd = socket(AF_PACKET, SOCK_RAW, htons(0));
+    this->fd = socket(AF_PACKET, SOCK_RAW, htons(0xf1bb));
     if (this->fd < 0) {
         throw SocketFailedToOpen("Could not open socket");
     }
