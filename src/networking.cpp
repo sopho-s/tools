@@ -83,7 +83,7 @@ void RawSocket::SendPacket(const EthernetFrame &eth) {
 IPPacket EthernetFrame::GetIP() {
     IPPacket ret;
     std::memcpy(&ret, this->data, sizeof(IPPacket) - 1);
-    ret.data = new unsigned char[(uint16_t)ret.length - (sizeof(IPPacket) - 1)];
-    std::memcpy(ret.data, this->data + (sizeof(IPPacket) - 1), (uint16_t)ret.length - (sizeof(IPPacket) - 1));
+    ret.data = new unsigned char[ret.length - (sizeof(IPPacket) - 1)];
+    std::memcpy(ret.data, this->data + (sizeof(IPPacket) - 1), ret.length - (sizeof(IPPacket) - 1));
     return ret;
 } 

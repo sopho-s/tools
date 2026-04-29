@@ -25,7 +25,7 @@ struct IPPacket {
         unsigned char ihl : 4;
     } vihl;
     unsigned char tos;
-    unsigned char length[2];
+    uint16_t length;
     unsigned char identification[2];
     union {
         unsigned char flags : 3;
@@ -48,7 +48,7 @@ struct EthernetFrame {
     unsigned char sfd;
     unsigned char dest[6];
     unsigned char source[6];
-    unsigned char lengthtype[2];
+    uint32_t lengthtype[2];
     unsigned char *data;
     unsigned char crc[4];
 
