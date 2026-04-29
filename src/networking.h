@@ -60,8 +60,9 @@ struct EthernetFrame {
 
 class RawSocket {
     private:
-        uint32_t fd;
+        int32_t fd;
     public:
+        RawSocket();
         RawSocket(const std::string &interface);
         ~RawSocket();
         std::vector<unsigned char> ReceivePacketRaw();

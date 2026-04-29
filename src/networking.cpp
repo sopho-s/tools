@@ -1,5 +1,9 @@
 #include "networking.h"
 
+RawSocket::RawSocket() {
+    this->fd = -1;
+}
+
 RawSocket::RawSocket(const std::string &interface) {
     this->fd = socket(AF_PACKET, SOCK_RAW, htons(0));
     if (this->fd < 0) {
