@@ -11,7 +11,7 @@ RawSocket::RawSocket(const std::string &interface) {
     }
 
     ifreq ifr;
-    std::memcpy(ifr.ifr_name, interface.c_str(), interface.size());
+    std::memcpy(ifr.ifr_name, interface.c_str(), interface.size()+1);
     int err = ioctl(this->fd, SIOCGIFINDEX, &ifr);
     if (err) {
         throw NoInterfaceIndex("Could not get interface index");
