@@ -5,7 +5,7 @@ RawSocket::RawSocket() {
 }
 
 RawSocket::RawSocket(const std::string &interface) {
-    this->fd = socket(AF_PACKET, SOCK_RAW, htons(0xf1bb));
+    this->fd = socket(AF_PACKET, SOCK_RAW, htons(0));
     if (this->fd < 0) {
         throw SocketFailedToOpen("Could not open socket");
     }
@@ -14,7 +14,7 @@ RawSocket::RawSocket(const std::string &interface) {
     std::memcpy(ifr.ifr_name, interface.c_str(), interface.size());
     int err = ioctl(this->fd, SIOCGIFINDEX, &ifr);
     if (err) {
-        throw NoIntefaceIndex("Could not get interface index");
+        throw NoInterfaceIndex("Could not get interface index");
     }
     
     struct sockaddr_ll addr;

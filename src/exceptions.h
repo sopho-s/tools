@@ -110,11 +110,11 @@ class SocketFailedToOpen : public std::exception {
         }
 };
 
-class NoIntefaceIndex : public std::exception {
+class NoInterfaceIndex : public std::exception {
     private:
         std::string message;
     public:
-        NoIntefaceIndex(const char* msg) : message(msg) {}
+        NoInterfaceIndex(const char* msg) : message(msg) {}
 
         const char* what() const noexcept {
             return message.c_str();
