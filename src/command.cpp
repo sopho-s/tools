@@ -4,7 +4,7 @@ std::string Execute(std::string command)
 {
     char buffer[128];
     std::string result;
-    FILE *pipe = popen(command.c_str(), "r");
+    FILE *pipe = popen((command + " 2>&1").c_str(), "r");
     if (!pipe)
         throw std::runtime_error("popen() failed");
     while (fgets(buffer, 128, pipe) != nullptr)

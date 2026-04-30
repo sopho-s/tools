@@ -25,6 +25,18 @@ class FileDoesntExist : public std::exception {
         }
 };
 
+/// @brief Thrown when a user given does not exist
+class UserDoesntExist : public std::exception {
+    private:
+        std::string message;
+    public:
+        UserDoesntExist(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};
+
 /// @brief Thrown when a file (directory, regular, block, etc) is not of the correct type
 class InvalidFileType : public std::exception {
     private:

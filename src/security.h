@@ -1,4 +1,5 @@
 #include <string>
+#include <cstring>
 #include <vector>
 #include <filesystem>
 #include <fstream>
@@ -18,7 +19,7 @@ struct User {
     std::pair<int, std::string>* groups; ///< Array of (gid, name) pairs for all groups the user belongs to
     int groupamount;     ///< Number of entries in the groups array
     ~User() {
-        delete[] groups;
+        ;
     }
 };
 
@@ -29,7 +30,7 @@ struct Group {
     User* usersingroup;     ///< Array of users belonging to this group
     int groupsize;          ///< Number of users in the group
     ~Group() {
-        delete usersingroup;
+        //delete usersingroup;
     }
 };
 

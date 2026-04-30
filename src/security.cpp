@@ -139,6 +139,9 @@ User GetCurrentUser()
 User GetUser(std::string user)
 {
     std::string output = Execute("id " + user);
+    if (output.find("no such user") != std::string::npos) {
+        throw UserDoesntExist("Given user does not exist");
+    }
     output = output.substr(0, output.size() - 2);
     User userobj;
     userobj.uuid = std::stoi(split(split(split(output, " ")[0], "=")[1], "(")[0]);

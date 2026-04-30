@@ -23,6 +23,7 @@ TEST_CASE("Get current directory fileobject")
     REQUIRE(!cdfo->isfile);
     Folder *collapsedcd = static_cast<Folder *>(cdfo);
     REQUIRE(collapsedcd->name == std::filesystem::current_path());
+    delete collapsedcd;
 }
 
 TEST_CASE("List current directory")
@@ -32,6 +33,7 @@ TEST_CASE("List current directory")
     Folder *collapsedcd = static_cast<Folder *>(cd);
     CHECK(collapsedcd->name == std::filesystem::current_path());
     REQUIRE(collapsedcd->fileamount == 9);
+    delete collapsedcd;
 }
 
 TEST_CASE("List test directory")
@@ -46,6 +48,7 @@ TEST_CASE("List test directory")
     {
         CHECK(collapsedcd->files[i]->name == files[i]);
     }
+    delete collapsedcd;
 }
 
 TEST_CASE("Check listing high perm folder produces correct error")
@@ -71,6 +74,7 @@ TEST_CASE("Recursively list with depth 0 returns bare folder without children")
     REQUIRE(!result->isfile);
     Folder *folder = static_cast<Folder *>(result);
     CHECK(folder->name == std::filesystem::absolute("tests").string());
+    delete folder;
 }
 
 TEST_CASE("Recursively list depth 1 on tests/ returns top-level entries only")
@@ -81,6 +85,7 @@ TEST_CASE("Recursively list depth 1 on tests/ returns top-level entries only")
     REQUIRE(!result->isfile);
     Folder *folder = static_cast<Folder *>(result);
     REQUIRE(folder->fileamount == 2);
+    delete folder;
 }
 
 TEST_CASE("Recursively list a regular file at any depth returns the file")
@@ -89,6 +94,7 @@ TEST_CASE("Recursively list a regular file at any depth returns the file")
     FileObject *result = ListDirectoryRecursive(filepath, 3);
     REQUIRE(result != nullptr);
     REQUIRE(result->isfile);
+    delete result;
 }
 
 TEST_CASE("ListCurrentDirectoryRecursive depth 0 returns bare current directory")
@@ -97,6 +103,8 @@ TEST_CASE("ListCurrentDirectoryRecursive depth 0 returns bare current directory"
     REQUIRE(result != nullptr);
     REQUIRE(!result->isfile);
     CHECK(result->name == std::filesystem::current_path().string());
+    Folder *folder = static_cast<Folder *>(result);
+    delete folder;
 }
 
 TEST_CASE("GetAbsoluteDirectory resolves a relative path to an absolute path")
@@ -124,6 +132,8 @@ TEST_CASE("GetFile on a regular file returns isfile true with correct name")
     CHECK(fo->isfile);
     CHECK(fo->name == filepath);
     CHECK(fo->permissions != 0);
+    File *file = static_cast<File *>(fo);
+    delete file;
 }
 
 TEST_CASE("GetFile on a directory returns isfile false")
@@ -133,6 +143,8 @@ TEST_CASE("GetFile on a directory returns isfile false")
     REQUIRE(fo != nullptr);
     CHECK(!fo->isfile);
     CHECK(fo->name == dirpath);
+    File *file = static_cast<File *>(fo);
+    delete file;
 }
 
 TEST_CASE("GetFile on a non-existent path throws FileDoesntExist")
@@ -154,6 +166,9 @@ TEST_CASE("GetFiles returns correctly typed entries for a mixed array")
     CHECK(files[1]->isfile);    // src/io.cpp is a file
     CHECK(files[0]->name == paths[0]);
     CHECK(files[1]->name == paths[1]);
+    Folder deleter = Folder();
+    deleter.fileamount = 2;
+    deleter.files = files;
 }
 
 TEST_CASE("GetFiles with two regular files both return isfile true")
@@ -166,6 +181,9 @@ TEST_CASE("GetFiles with two regular files both return isfile true")
     REQUIRE(files != nullptr);
     CHECK(files[0]->isfile);
     CHECK(files[1]->isfile);
+    Folder deleter = Folder();
+    deleter.fileamount = 2;
+    deleter.files = files;
 }
 
 TEST_CASE("ReadFile on a non-existent path throws FileDoesntExist")
@@ -186,6 +204,8 @@ TEST_CASE("ReadFile on a world-readable file returns a valid file object")
     REQUIRE(fo != nullptr);
     CHECK(fo->isfile);
     CHECK(fo->name == filepath);
+    File *file = static_cast<File *>(fo);
+    delete file;
 }
 
 TEST_CASE("ReadFile on a root-only file throws ReadNotPermitted")
@@ -202,6 +222,8 @@ TEST_CASE("ListDirectory on lowpermfolder returns one entry (the folder/ subdir)
     Folder *folder = static_cast<Folder *>(cd);
     REQUIRE(folder->fileamount == 1);
     CHECK(!folder->files[0]->isfile);
+    Folder *file = static_cast<Folder *>(cd);
+    delete file;
 }
 
 TEST_CASE("ListDirectory on a non-existent path throws")
@@ -555,8 +577,7 @@ TEST_CASE("split empty string returns single empty element")
 {
     std::string s = "";
     std::vector<std::string> result = split(s, ",");
-    REQUIRE(result.size() == 1);
-    CHECK(result[0] == "");
+    REQUIRE(result.size() == 0);
 }
 
 TEST_CASE("PadTo pads with specified value")
@@ -623,7 +644,7 @@ TEST_CASE("AmIRoot returns false for non-root user")
 
 TEST_CASE("GetUser for non-existent user throws")
 {
-    CHECK_THROWS(GetUser("this_user_does_not_exist_xyz123"));
+    CHECK_THROWS_AS(GetUser("this_user_does_not_exist_xyz123"), UserDoesntExist);
 }
 
 // ADDITIONAL IO TESTS
@@ -640,6 +661,9 @@ TEST_CASE("ReadFiles returns array of file objects")
     REQUIRE(files[1] != nullptr);
     CHECK(files[0]->isfile);
     CHECK(files[1]->isfile);
+    Folder deleter = Folder();
+    deleter.fileamount = 2;
+    deleter.files = files;
 }
 
 TEST_CASE("ReadFiles with one invalid path throws")

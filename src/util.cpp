@@ -20,7 +20,9 @@ std::vector<std::string> split(std::string s, std::string delim)
     {
         pos = s.find(delim);
         if (pos == -1) {
-            res.push_back(s);
+            if (s.length() != 0) {
+                res.push_back(s);
+            }
             break;
         }
         res.push_back(s.substr(0, pos));

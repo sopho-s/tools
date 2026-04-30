@@ -132,7 +132,6 @@ FileObject *ListDirectory(std::string directory)
         collapseddir->files[i] = files[i];
     }
     collapseddir->fileamount = files.size();
-    delete currentdir;
     currentdir = collapseddir;
     return currentdir;
 }
