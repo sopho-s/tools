@@ -3,6 +3,7 @@
 #include <string>
 #include <arpa/inet.h>
 #include "exceptions.h"
+#include "util.h"
 #include <net/ethernet.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
@@ -41,6 +42,7 @@ struct IPPacket {
     ~IPPacket() {
         delete this->data;
     }
+    std::string ToString();
 };
 
 struct EthernetFrame {
@@ -55,7 +57,9 @@ struct EthernetFrame {
     ~EthernetFrame() {
         delete this->data;
     }
+    void ParseVec(std::vector<unsigned char> frame);
     IPPacket GetIP();
+    std::string ToString();
 };
 
 class RawSocket {

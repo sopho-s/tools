@@ -3,9 +3,11 @@
 #include "../src/command.h"
 #include "../src/crypto.h"
 #include "../src/util.h"
+#include "../src/networking.h"
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 #include <cstring>
+#include <unistd.h>
 
 // IO TESTS
 
@@ -687,3 +689,276 @@ TEST_CASE("GetParentDirectory on nested path")
     std::string result = GetParentDirectory("src/io.cpp");
     CHECK(result.find("src") != std::string::npos);
 }
+
+// NETWORKING TESTS
+
+TEST_CASE("Ethernet type constants have standard IEEE values", "[network]")
+{
+    CHECK(ETHER_TYPE_IPv4 == 0x0800);
+    CHECK(ETHER_TYPE_IPv6 == 0x86DD);
+    CHECK(ETHER_TYPE_ARP  == 0x0806);
+    CHECK(ETHER_TYPE_RARP == 0x8035);
+    CHECK(ETHER_TYPE_VLAN == 0x8100);
+    CHECK(ETHER_TYPE_1588 == 0x88F7);
+    CHECK(ETHER_TYPE_SLOW == 0x8809);
+    CHECK(ETHER_TYPE_TEB  == 0x6558);
+}
+
+TEST_CASE("Default RawSocket constructor does not throw", "[network]")
+{
+    // Default ctor sets fd=-1 without calling socket(); destructor close(-1)
+    // is a no-op (returns EBADF) and must not crash.
+    CHECK_NOTHROW([]() { RawSocket s; }());
+}
+
+TEST_CASE("RawSocket on bogus interface throws", "[network]")
+{
+    // Non-root: socket(AF_PACKET, SOCK_RAW, ...) fails -> SocketFailedToOpen.
+    // Root: socket() succeeds but ioctl SIOCGIFINDEX fails -> NoInterfaceIndex.
+    // Either way, construction must throw.
+    CHECK_THROWS([]() { RawSocket s("definitely_not_a_real_iface_xyz123"); }());
+}
+
+TEST_CASE("RawSocket on bogus interface throws SocketFailedToOpen when non-root", "[network]")
+{
+    if (geteuid() == 0) {
+        SUCCEED("Skipped: running as root");
+        return;
+    }
+    CHECK_THROWS_AS(
+        RawSocket("definitely_not_a_real_iface_xyz123"),
+        SocketFailedToOpen
+    );
+}
+
+TEST_CASE("ReceivePacketRaw on default-constructed RawSocket throws PacketReceiveError", "[network]")
+{
+    RawSocket s;
+    CHECK_THROWS_AS(s.ReceivePacketRaw(), PacketReceiveError);
+}
+
+TEST_CASE("ReceivePacket on default-constructed RawSocket throws PacketReceiveError", "[network]")
+{
+    RawSocket s;
+    CHECK_THROWS_AS(s.ReceivePacket(), PacketReceiveError);
+}
+
+TEST_CASE("SendPacketRaw on default-constructed RawSocket throws PacketSendError", "[network]")
+{
+    RawSocket s;
+    std::vector<unsigned char> packet(64, 0xAB);
+    CHECK_THROWS_AS(s.SendPacketRaw(packet), PacketSendError);
+}
+
+TEST_CASE("EthernetFrame is constructible with null data pointer", "[network]")
+{
+    EthernetFrame eth;
+    eth.data = nullptr;
+    // destructor must not crash on nullptr data
+    CHECK(true);
+}
+
+TEST_CASE("IPPacket is constructible with null data pointer", "[network]")
+{
+    IPPacket ip;
+    ip.data = nullptr;
+    // destructor must not crash on nullptr data
+    CHECK(true);
+}
+
+TEST_CASE("RawSocket on empty interface name throws", "[network]")
+{
+    // Non-root: socket() fails before name check -> SocketFailedToOpen.
+    // Root: ifr_name is empty, ioctl SIOCGIFINDEX fails -> NoInterfaceIndex.
+    CHECK_THROWS([]() { RawSocket s(""); }());
+}
+
+TEST_CASE("RawSocket on empty interface throws SocketFailedToOpen when non-root", "[network]")
+{
+    if (geteuid() == 0) {
+        SUCCEED("Skipped: running as root");
+        return;
+    }
+    CHECK_THROWS_AS(RawSocket(""), SocketFailedToOpen);
+}
+
+TEST_CASE("RawSocket on loopback interface throws SocketFailedToOpen when non-root", "[network]")
+{
+    // AF_PACKET sockets require CAP_NET_RAW; non-root must fail at socket().
+    if (geteuid() == 0) {
+        SUCCEED("Skipped: running as root");
+        return;
+    }
+    CHECK_THROWS_AS(RawSocket("lo"), SocketFailedToOpen);
+}
+
+TEST_CASE("RawSocket on loopback interface succeeds when root", "[network]")
+{
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    CHECK_NOTHROW([]() { RawSocket s("lo"); }());
+}
+
+TEST_CASE("RawSocket on bogus interface throws NoInterfaceIndex when root", "[network]")
+{
+    // Root: socket() succeeds, ioctl SIOCGIFINDEX fails on unknown name.
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    CHECK_THROWS_AS(
+        RawSocket("definitely_not_a_real_iface_xyz123"),
+        NoInterfaceIndex
+    );
+}
+
+TEST_CASE("RawSocket repeated failed construction does not crash", "[network]")
+{
+    // Verify no fd leak / state corruption across consecutive throwing ctors.
+    for (int i = 0; i < 8; i++) {
+        CHECK_THROWS([]() { RawSocket s("definitely_not_a_real_iface_xyz123"); }());
+    }
+}
+
+TEST_CASE("RawSocket with interface name at IFNAMSIZ boundary throws", "[network]")
+{
+    // IFNAMSIZ is typically 16; pad to that length to exercise boundary handling.
+    std::string name(IFNAMSIZ - 1, 'z');
+    CHECK_THROWS([&]() { RawSocket s(name); }());
+}
+
+TEST_CASE("Multiple default-constructed RawSockets destruct independently", "[network]")
+{
+    CHECK_NOTHROW([]() {
+        RawSocket a;
+        RawSocket b;
+        RawSocket c;
+    }());
+}
+
+TEST_CASE("SendPacket on default-constructed RawSocket throws PacketSendError", "[network]")
+{
+    RawSocket s;
+    EthernetFrame eth;
+    std::memset(&eth, 0, sizeof(eth));
+    eth.data = new unsigned char[ETH_FRAME_LEN - sizeof(EthernetFrame) + 1]();
+    CHECK_THROWS_AS(s.SendPacket(eth), PacketSendError);
+}
+
+TEST_CASE("RawSocket on each available interface throws SocketFailedToOpen when non-root", "[network]")
+{
+    if (geteuid() == 0) {
+        SUCCEED("Skipped: running as root");
+        return;
+    }
+    // Iterate /sys/class/net/ entries; every real iface must fail at socket()
+    // with the same exception type for non-privileged users.
+    std::filesystem::path netdir = "/sys/class/net";
+    if (!std::filesystem::exists(netdir)) {
+        SUCCEED("Skipped: /sys/class/net unavailable");
+        return;
+    }
+    for (const auto &entry : std::filesystem::directory_iterator(netdir)) {
+        std::string ifname = entry.path().filename().string();
+        CHECK_THROWS_AS(RawSocket(ifname), SocketFailedToOpen);
+    }
+}
+
+TEST_CASE("RawSocket on each available interface succeeds when root", "[network]")
+{
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    std::filesystem::path netdir = "/sys/class/net";
+    if (!std::filesystem::exists(netdir)) {
+        SUCCEED("Skipped: /sys/class/net unavailable");
+        return;
+    }
+    for (const auto &entry : std::filesystem::directory_iterator(netdir)) {
+        std::string ifname = entry.path().filename().string();
+        CHECK_NOTHROW([&]() { RawSocket s(ifname); }());
+    }
+}
+
+TEST_CASE("Multiple RawSockets on loopback coexist when root", "[network]")
+{
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    CHECK_NOTHROW([]() {
+        RawSocket a("lo");
+        RawSocket b("lo");
+        RawSocket c("lo");
+    }());
+}
+
+TEST_CASE("RawSocket on loopback reopens after destruction when root", "[network]")
+{
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    // Sequential open/close cycles — verify no fd leak prevents rebind.
+    for (int i = 0; i < 16; i++) {
+        CHECK_NOTHROW([]() { RawSocket s("lo"); }());
+    }
+}
+
+TEST_CASE("SendPacketRaw on bound loopback socket succeeds when root", "[network]")
+{
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    RawSocket s("lo");
+    // Minimum Ethernet payload is 60 bytes (ETH_ZLEN). Build a benign frame:
+    // dest=00:00:00:00:00:00, src=00:00:00:00:00:00, ethertype=0x0800 (IPv4),
+    // padded to 64 bytes total. Loopback accepts arbitrary frames.
+    std::vector<unsigned char> packet(64, 0x00);
+    packet[12] = 0x08;
+    packet[13] = 0x00;
+    CHECK_NOTHROW(s.SendPacketRaw(packet));
+}
+/*
+TEST_CASE("SendPacketRaw round-trip on loopback receives a frame when root", "[network]")
+{
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    RawSocket sender("lo");
+    RawSocket receiver("lo");
+    std::vector<unsigned char> packet(64, 0x00);
+    packet[12] = 0x08;
+    packet[13] = 0x00;
+    // Tag payload so we can identify our frame among any background traffic.
+    packet[20] = 0xDE;
+    packet[21] = 0xAD;
+    packet[22] = 0xBE;
+    packet[23] = 0xEF;
+    CHECK_NOTHROW(sender.SendPacketRaw(packet));
+    std::vector<unsigned char> got = receiver.ReceivePacketRaw();
+    CHECK(got.size() >= 24);
+}
+
+TEST_CASE("RawSocket on bogus interface does not leak fds when root", "[network]")
+{
+    if (geteuid() != 0) {
+        SUCCEED("Skipped: not running as root");
+        return;
+    }
+    // Repeated failed binds must not exhaust fd table or wedge subsequent opens.
+    for (int i = 0; i < 32; i++) {
+        CHECK_THROWS_AS(
+            RawSocket("definitely_not_a_real_iface_xyz123"),
+            NoInterfaceIndex
+        );
+    }
+    // After many failures, a real open on lo must still succeed.
+    CHECK_NOTHROW([]() { RawSocket s("lo"); }());
+}
+*/

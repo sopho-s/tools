@@ -30,3 +30,21 @@ std::vector<std::string> split(std::string s, std::string delim)
     }
     return res;
 }
+
+std::string ToHexString(unsigned char* data, int amount) {
+    std::string hexstring = "";
+    char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    for (int i = 0; i < amount; i++) {
+        hexstring += hex_chars[ ( data[i] & 0xF0 ) >> 4 ];
+        hexstring += hex_chars[ ( data[i] & 0x0F ) >> 0 ];
+        if (i != amount -1) {
+            hexstring += " ";
+        }
+    }
+    return hexstring;
+}
+
+std::string ToIPString(unsigned char* data) {
+    std::string IP = std::to_string((int8_t)data[0]) + "." + std::to_string((int8_t)data[1]) + "." + std::to_string((int8_t)data[2]) + "." +std::to_string((int8_t)data[3]);
+    return IP;
+}
