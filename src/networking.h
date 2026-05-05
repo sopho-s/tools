@@ -20,18 +20,15 @@
 #define ETHER_TYPE_SLOW 0x8809 /**< Slow protocols (LACP and Marker). */
 #define ETHER_TYPE_TEB  0x6558 /**< Transparent Ethernet Bridging. */
 
-struct IPPacket {
-    union {
-        unsigned char version : 4;
-        unsigned char ihl : 4;
-    } vihl;
+#define SIZEOFETH 14
+#define SIZEOFIPV4 24
+
+struct IPv4Packet {
+    unsigned char vihl;
     unsigned char tos;
     uint16_t length;
     unsigned char identification[2];
-    union {
-        unsigned char flags : 3;
-        uint16_t fragoffset : 13;
-    } flagfrag;
+    uint16_t flagfrag;
     unsigned char ttl;
     unsigned char protocol;
     unsigned char checksum[2];
@@ -39,26 +36,23 @@ struct IPPacket {
     unsigned char dest[4];
     unsigned char options[40];
     unsigned char *data;
-    ~IPPacket() {
+    ~IPv4Packet() {
         delete this->data;
     }
     std::string ToString();
 };
 
 struct EthernetFrame {
-    unsigned char preamble[7];
-    unsigned char sfd;
     unsigned char dest[6];
     unsigned char source[6];
-    uint32_t lengthtype[2];
+    unsigned char lengthtype[2];
     unsigned char *data;
-    unsigned char crc[4];
 
     ~EthernetFrame() {
-        delete this->data;
+        delete[] this->data;
     }
-    void ParseVec(std::vector<unsigned char> frame);
-    IPPacket GetIP();
+    void ParseVec(const std::vector<unsigned char> frame);
+    IPv4Packet GetIPv4();
     std::string ToString();
 };
 

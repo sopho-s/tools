@@ -760,7 +760,7 @@ TEST_CASE("EthernetFrame is constructible with null data pointer", "[network]")
 
 TEST_CASE("IPPacket is constructible with null data pointer", "[network]")
 {
-    IPPacket ip;
+    IPv4Packet ip;
     ip.data = nullptr;
     // destructor must not crash on nullptr data
     CHECK(true);

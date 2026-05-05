@@ -74,8 +74,8 @@ void RawSocket::SendPacketRaw(const std::vector<unsigned char> &packet) {
 
 void RawSocket::SendPacket(const EthernetFrame &eth) {
     std::vector<unsigned char> packet(ETH_FRAME_LEN);
-    std::memcpy(packet.data(), &eth, sizeof(EthernetFrame) - 1);
-    std::memcpy(packet.data()+sizeof(EthernetFrame) - 1, eth.data, ETH_FRAME_LEN - sizeof(EthernetFrame) + 1);
+    std::memcpy(packet.data(), &eth, SIZEOFETH);
+    std::memcpy(packet.data()+SIZEOFETH, eth.data, ETH_FRAME_LEN - SIZEOFETH + 1);
     ssize_t size = send(this->fd, packet.data(), packet.size(), 0);
     if (size < 0) {
         throw PacketSendError("Failed to send packet");
@@ -84,26 +84,40 @@ void RawSocket::SendPacket(const EthernetFrame &eth) {
     }
 }
 
-IPPacket EthernetFrame::GetIP() {
-    IPPacket ret;
-    std::memcpy(&ret, this->data, sizeof(IPPacket) - 1);
-    ret.data = new unsigned char[ret.length - (sizeof(IPPacket) - 1)];
-    std::memcpy(ret.data, this->data + (sizeof(IPPacket) - 1), ret.length - (sizeof(IPPacket) - 1));
+IPv4Packet EthernetFrame::GetIPv4() {
+    IPv4Packet ret;
+    std::memcpy(&ret, this->data, SIZEOFIPV4);
+    ret.data = new unsigned char[ret.length - (SIZEOFIPV4)];
+    std::memcpy(ret.data, this->data + (SIZEOFIPV4), ret.length - (SIZEOFIPV4));
     return ret;
 } 
 
 std::string EthernetFrame::ToString() {
     std::string ret = "";
-    ret += "preamble: " + ToHexString(this->preamble, 7) + "\n";
-    ret += "sfd: " + ToHexString(&(this->sfd), 1) + "\n";
     ret += "destination mac: " + ToHexString(this->dest, 6) + "\n";
     ret += "source mac: " + ToHexString(this->source, 6) + "\n";
-    ret += "crc: " + ToHexString(this->crc, 4) + "\n";
+    ret += "length or type: " + ToHexString(this->lengthtype, 2) + "\n";
+    return ret;
+} 
+
+std::string IPv4Packet::ToString() {
+    std::string ret = "";
+    ret += "version and ihl: " + ToHexString(this->vihl) + "\n";
+    ret += "tos: " + ToHexString(this->tos) + "\n";
+    ret += "length: " + ToHexString(this->length) + "\n";
+    ret += "identification: " + ToHexString(this->identification, 2) + "\n";
+    ret += "flags and frag offset: " + ToHexString(this->flagfrag) + "\n";
+    ret += "ttl: " + ToHexString(this->ttl) + "\n";
+    ret += "protocol: " + ToHexString(this->protocol) + "\n";
+    ret += "checksum: " + ToHexString(this->checksum, 2) + "\n";
+    ret += "source: " + ToIPString(this->source) + "\n";
+    ret += "destination: " + ToIPString(this->dest) + "\n";
+    ret += "options: " + ToHexString(this->options, 40) + "\n";
     return ret;
 } 
 
 void EthernetFrame::ParseVec(std::vector<unsigned char> frame) {
-    std::memcpy(this, frame.data(), sizeof(EthernetFrame)-1);
-    this->data = new unsigned char[frame.size() - (sizeof(EthernetFrame) - 1)];
-    std::memcpy(this->data, frame.data()+sizeof(EthernetFrame)-1, frame.size() - (sizeof(EthernetFrame) - 1));
+    std::memcpy(this, frame.data(), SIZEOFETH);
+    this->data = new unsigned char[frame.size() - (SIZEOFETH)];
+    std::memcpy(this->data, frame.data()+SIZEOFETH, frame.size() - (SIZEOFETH));
 }
