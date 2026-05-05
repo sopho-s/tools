@@ -32,8 +32,8 @@ struct IPv4Packet {
     unsigned char ttl;
     unsigned char protocol;
     unsigned char checksum[2];
-    unsigned char source[4];
-    unsigned char dest[4];
+    uint32_t source;
+    uint32_t dest;
     unsigned char options[40];
     unsigned char *data;
     ~IPv4Packet() {

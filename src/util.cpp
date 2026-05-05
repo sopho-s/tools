@@ -127,6 +127,11 @@ std::string ToIPString(unsigned char* data) {
     return IP;
 }
 
+std::string ToIPString(uint32_t data) {
+    std::string IP = std::to_string((uint8_t)((data & (0xFF << 24)) >> 24)) + "." + std::to_string((uint8_t)((data & (0xFF << 16)) >> 16)) + "." + std::to_string((uint8_t)((data & (0xFF << 8)) >> 8)) + "." +std::to_string((uint8_t)(data & 0xFF));
+    return IP;
+}
+
 bool ArgExist(char** begin, char** end, const std::string& option) {
     return std::find(begin, end, option) != end;
 }

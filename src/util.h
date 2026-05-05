@@ -18,6 +18,7 @@ std::string ToHexString(uint16_t data);
 std::string ToHexString(uint32_t* data, int amount);
 std::string ToHexString(uint32_t data);
 std::string ToIPString(unsigned char* data);
+std::string ToIPString(uint32_t data);
 
 bool ArgExist(char** begin, char** end, const std::string& option);
 char* GetArg(char** begin, char** end, const std::string& option);
