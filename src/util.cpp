@@ -31,7 +31,7 @@ std::vector<std::string> split(std::string s, std::string delim)
     return res;
 }
 
-std::string ToHexString(unsigned char data) {
+std::string ToHexString(const unsigned char data) {
     std::string hexstring = "";
     char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     hexstring += hex_chars[ ( data & 0xF0 ) >> 4 ];
@@ -39,7 +39,7 @@ std::string ToHexString(unsigned char data) {
     return hexstring;
 }
 
-std::string ToHexString(unsigned char* data, int amount) {
+std::string ToHexString(const unsigned char* data, const int amount) {
     std::string hexstring = "";
     char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     for (int i = 0; i < amount; i++) {
@@ -52,7 +52,7 @@ std::string ToHexString(unsigned char* data, int amount) {
     return hexstring;
 }
 
-std::string ToHexString(uint16_t* data, int amount) {
+std::string ToHexString(const uint16_t* data, const int amount) {
     std::string hexstring = "";
     char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     for (int i = 0; i < amount; i++) {
@@ -72,23 +72,24 @@ std::string ToHexString(uint16_t* data, int amount) {
     return hexstring;
 }
 
-std::string ToHexString(uint16_t data) {
+std::string ToHexString(const uint16_t data) {
     std::string hexstring = "";
     char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    uint16_t datacopy = data;
     for (int t = 0; t < 2; t++) {
-        hexstring += hex_chars[ ( data & 0xF0 ) >> 4 ];
-        hexstring += hex_chars[ ( data & 0x0F ) >> 0 ];
+        hexstring += hex_chars[ ( datacopy & 0xF0 ) >> 4 ];
+        hexstring += hex_chars[ ( datacopy & 0x0F ) >> 0 ];
         if (t != 1) {
             hexstring += " ";
         }
-        data = data >> 8;
+        datacopy = datacopy >> 8;
     }
     return hexstring;
 }
 
 
 
-std::string ToHexString(uint32_t* data, int amount) {
+std::string ToHexString(const uint32_t* data, const int amount) {
     std::string hexstring = "";
     char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     for (int i = 0; i < amount; i++) {
@@ -108,26 +109,27 @@ std::string ToHexString(uint32_t* data, int amount) {
     return hexstring;
 }
 
-std::string ToHexString(uint32_t data) {
+std::string ToHexString(const uint32_t data) {
     std::string hexstring = "";
     char const hex_chars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    uint32_t datacopy = data;
     for (int t = 0; t < 4; t++) {
-        hexstring += hex_chars[ ( data & 0xF0 ) >> 4 ];
-        hexstring += hex_chars[ ( data & 0x0F ) >> 0 ];
+        hexstring += hex_chars[ ( datacopy & 0xF0 ) >> 4 ];
+        hexstring += hex_chars[ ( datacopy & 0x0F ) >> 0 ];
         if (t != 3) {
             hexstring += " ";
         }
-        data = data >> 8;
+        datacopy = datacopy >> 8;
     }
     return hexstring;
 }
 
-std::string ToIPString(unsigned char* data) {
+std::string ToIPString(const unsigned char* data) {
     std::string IP = std::to_string((uint8_t)data[0]) + "." + std::to_string((uint8_t)data[1]) + "." + std::to_string((uint8_t)data[2]) + "." +std::to_string((uint8_t)data[3]);
     return IP;
 }
 
-std::string ToIPString(uint32_t data) {
+std::string ToIPString(const uint32_t data) {
     std::string IP = std::to_string((uint8_t)((data & (0xFF << 24)) >> 24)) + "." + std::to_string((uint8_t)((data & (0xFF << 16)) >> 16)) + "." + std::to_string((uint8_t)((data & (0xFF << 8)) >> 8)) + "." +std::to_string((uint8_t)(data & 0xFF));
     return IP;
 }

@@ -59,6 +59,8 @@ EthernetFrame RawSocket::ReceivePacket() {
     std::memcpy(&eth, packet.data(), sizeof(EthernetFrame)-1);
     eth.data = new unsigned char[packet.size() - (sizeof(EthernetFrame) - 1)];
     std::memcpy(eth.data, packet.data()+sizeof(EthernetFrame)-1, packet.size() - (sizeof(EthernetFrame) - 1));
+    std::reverse(eth.source, eth.source + 5);
+    std::reverse(eth.dest, eth.dest + 5);
     return eth;
 }
 
@@ -89,6 +91,8 @@ IPv4Packet EthernetFrame::GetIPv4() {
     std::memcpy(&ret, this->data, SIZEOFIPV4);
     ret.data = new unsigned char[ret.length - (SIZEOFIPV4)];
     std::memcpy(ret.data, this->data + (SIZEOFIPV4), ret.length - (SIZEOFIPV4));
+    ret.source = htonl(ret.source);
+    ret.dest = htonl(ret.dest);
     return ret;
 } 
 

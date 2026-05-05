@@ -923,7 +923,7 @@ TEST_CASE("SendPacketRaw on bound loopback socket succeeds when root", "[network
     packet[13] = 0x00;
     CHECK_NOTHROW(s.SendPacketRaw(packet));
 }
-/*
+
 TEST_CASE("SendPacketRaw round-trip on loopback receives a frame when root", "[network]")
 {
     if (geteuid() != 0) {
@@ -961,4 +961,3 @@ TEST_CASE("RawSocket on bogus interface does not leak fds when root", "[network]
     // After many failures, a real open on lo must still succeed.
     CHECK_NOTHROW([]() { RawSocket s("lo"); }());
 }
-*/
