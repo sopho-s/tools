@@ -61,6 +61,7 @@ EthernetFrame RawSocket::ReceivePacket() {
     std::memcpy(eth.data, packet.data()+sizeof(EthernetFrame)-1, packet.size() - (sizeof(EthernetFrame) - 1));
     std::reverse(eth.source, eth.source + 5);
     std::reverse(eth.dest, eth.dest + 5);
+    eth.truesize = size;
     return eth;
 }
 
@@ -86,13 +87,32 @@ void RawSocket::SendPacket(const EthernetFrame &eth) {
     }
 }
 
-IPv4Packet EthernetFrame::GetIPv4() {
+IPv4Packet EthernetFrame::GetIPv4() const {
     IPv4Packet ret;
     std::memcpy(&ret, this->data, SIZEOFIPV4);
     ret.data = new unsigned char[ret.length - (SIZEOFIPV4)];
     std::memcpy(ret.data, this->data + (SIZEOFIPV4), ret.length - (SIZEOFIPV4));
     ret.source = htonl(ret.source);
     ret.dest = htonl(ret.dest);
+    ret.truesize = this->truesize - SIZEOFETH;
+    return ret;
+} 
+
+TCPPacket IPv4Packet::GetTCP() const {
+    TCPPacket ret;
+    std::memcpy(&ret, this->data, SIZEOFTCP);
+    ret.offset = ret.offset >> 4;
+    ret.options = new unsigned char[ret.offset - (SIZEOFTCP)];
+    std::memcpy(ret.options, this->data + (SIZEOFTCP), ret.offset - (SIZEOFTCP));
+    ret.truesize = this->truesize - SIZEOFIPV4;
+    if (ret.truesize < ret.offset) {
+        throw NetworkSizeMismatch("offset is larger than the size of the data");
+    }
+    uint16_t remainingsize = ret.truesize - ret.offset;
+    ret.options = new unsigned char[remainingsize];
+    std::memcpy(ret.data, this->data + ret.offset, remainingsize - (SIZEOFTCP));
+    ret.source = htons(ret.source);
+    ret.dest = htons(ret.dest);
     return ret;
 } 
 
@@ -124,4 +144,5 @@ void EthernetFrame::ParseVec(std::vector<unsigned char> frame) {
     std::memcpy(this, frame.data(), SIZEOFETH);
     this->data = new unsigned char[frame.size() - (SIZEOFETH)];
     std::memcpy(this->data, frame.data()+SIZEOFETH, frame.size() - (SIZEOFETH));
+    this->truesize = frame.size();
 }

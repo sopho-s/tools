@@ -22,6 +22,35 @@
 
 #define SIZEOFETH 14
 #define SIZEOFIPV4 24
+#define SIZEOFTCP 20
+
+#define LOCALDEFAULT (uint32_t)0x7f000001
+#define RESERVED1 (uint32_t)0x00000000
+#define RESERVED1RANGE 8
+#define RESERVED2 (uint32_t)0xa9fe0000
+#define RESERVED2RANGE 16
+#define RESERVED3 (uint32_t)0xf0000000
+#define RESERVED3RANGE 4
+
+struct TCPPacket {
+    uint16_t source;
+    uint16_t dest;
+    uint32_t sequencenumber;
+    uint32_t acknumber;
+    unsigned char offset;
+    unsigned char flags;
+    uint16_t window;
+    uint16_t checksum;
+    uint16_t urgentptr;
+    unsigned char *options;
+    unsigned char *data;
+    uint32_t truesize;
+    ~TCPPacket() {
+        delete[] this->options;
+        delete[] this->data;
+    }
+    std::string ToString();
+};
 
 struct IPv4Packet {
     unsigned char vihl;
@@ -36,9 +65,11 @@ struct IPv4Packet {
     uint32_t dest;
     unsigned char options[40];
     unsigned char *data;
+    uint32_t truesize;
     ~IPv4Packet() {
-        delete this->data;
+        delete[] this->data;
     }
+    TCPPacket GetTCP() const;
     std::string ToString();
 };
 
@@ -47,12 +78,12 @@ struct EthernetFrame {
     unsigned char source[6];
     unsigned char lengthtype[2];
     unsigned char *data;
-
+    uint32_t truesize;
     ~EthernetFrame() {
         delete[] this->data;
     }
     void ParseVec(const std::vector<unsigned char> frame);
-    IPv4Packet GetIPv4();
+    IPv4Packet GetIPv4() const;
     std::string ToString();
 };
 

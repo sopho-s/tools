@@ -165,3 +165,14 @@ class PacketSendError : public std::exception {
             return message.c_str();
         }
 };
+
+class NetworkSizeMismatch : public std::exception {
+    private:
+        std::string message;
+    public:
+        NetworkSizeMismatch(const char* msg) : message(msg) {}
+
+        const char* what() const noexcept {
+            return message.c_str();
+        }
+};

@@ -134,6 +134,16 @@ std::string ToIPString(const uint32_t data) {
     return IP;
 }
 
+uint32_t ToLowerIP(const uint32_t ip, const uint8_t cidr) {
+    uint32_t mask = ~(((1 << (32-cidr)) - 1) << (32-cidr));
+    return ip & mask;
+}
+
+uint32_t ToUpperIP(const uint32_t ip, const uint8_t cidr) {
+    uint32_t mask = (((1 << (32-cidr)) - 1) << (32-cidr));
+    return ip | mask;
+}
+
 bool ArgExist(char** begin, char** end, const std::string& option) {
     return std::find(begin, end, option) != end;
 }
