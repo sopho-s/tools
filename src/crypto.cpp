@@ -172,6 +172,23 @@ void EncryptAES128(unsigned char* data, unsigned char* key) {
     delete[] sbox;
 }
 
+void DecryptAES128(unsigned char* data, unsigned char* key) {
+    unsigned char* roundkeys = ExpandRoundKey128(key);
+    unsigned char* sbox = GetSBox();
+    AddRoundKey128(data, roundkeys);
+    ShiftRows128(data);
+    SubBytes128(data, sbox);
+    for (int i = 0; i < 10; i++) {
+        AddRoundKey128(data, roundkeys + 10 * WORDSIZE * 4 - (i + 1) * WORDSIZE * 4);
+        MixColumns128(data);
+        ShiftRows128(data);
+        SubBytes128(data, sbox);
+    }
+    AddRoundKey128(data, roundkeys + 10 * WORDSIZE * 4);
+    delete[] roundkeys;
+    delete[] sbox;
+}
+
 void CTRDRBGUpdate(AESState &state, uint8_t seedmaterial[]) {
     for (int i = 0; i < 2; i++) {
         

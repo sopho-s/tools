@@ -12,6 +12,7 @@ struct FileObject {
     int permissions;      ///< Permission bits (e.g. Unix-style octal)
     std::string owner;    ///< Name of the owning user
     virtual ~FileObject() = default;
+    virtual std::string ToString() = 0;
 };
 
 
@@ -21,13 +22,13 @@ struct File : public FileObject {
     int contentssize;        ///< Size of the contents buffer in bytes
     bool retrievedcontent;   ///< true if the file contents have been loaded
 
-    ~File() {
+    ~File() override {
         delete this->contents;
     }
 
     /// @brief Returns a human-readable summary of the file's metadata
     /// @return Formatted string with name, permissions, owner, and size
-    std::string ToString() {
+    std::string ToString() override {
         std::string filerep = "";
         filerep += "Filename: " + name;
         filerep += "\nPermissions: " + std::to_string(permissions);
@@ -43,7 +44,7 @@ struct Folder : public FileObject {
     FileObject** files;  ///< Array of pointers to the folder's contents
     int fileamount;      ///< Number of entries in the files array
 
-    ~Folder() {
+    ~Folder() override {
         if (this->files == nullptr) {
             return;
         }
@@ -64,7 +65,7 @@ struct Folder : public FileObject {
 
     /// @brief Returns a human-readable summary of the folder's metadata
     /// @return Formatted string with name, permissions, owner, and file count
-    std::string ToString() {
+    std::string ToString() override {
         std::string folderrep = "";
         folderrep += "Foldername: " + name;
         folderrep += "\nPermissions: " + std::to_string(permissions);

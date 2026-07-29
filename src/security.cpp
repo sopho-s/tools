@@ -136,6 +136,7 @@ User GetCurrentUser()
 {
     return GetUser(Execute("whoami"));
 }
+
 User GetUser(std::string user)
 {
     std::string output = Execute("id " + user);
@@ -157,6 +158,7 @@ User GetUser(std::string user)
     userobj.groupamount = groupsvec.size();
     return userobj;
 }
+
 std::vector<Group> GetGroups() {
     std::string directory = "/etc/group";
     try {
@@ -180,7 +182,6 @@ std::vector<Group> GetGroups() {
     default:
     {
         throw Unsupported("/etc/group is of a file type that is unsupported");
-        break;
     }
     }
     std::ifstream file("/etc/group");
@@ -230,7 +231,6 @@ Group GetGroup(std::string groupstr) {
     default:
     {
         throw Unsupported("/etc/group is of a file type that is unsupported");
-        break;
     }
     }
     std::ifstream file("/etc/group");

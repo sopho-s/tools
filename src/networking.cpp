@@ -1,5 +1,7 @@
 #include "networking.h"
 
+#ifdef __linux__
+
 RawSocket::RawSocket() {
     this->fd = -1;
 }
@@ -86,6 +88,9 @@ void RawSocket::SendPacket(const EthernetFrame &eth) {
         throw PacketSendError("Packet truncated");
     }
 }
+#elif _WIN32
+
+#endif
 
 IPv4Packet EthernetFrame::GetIPv4() const {
     IPv4Packet ret;

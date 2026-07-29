@@ -1,4 +1,9 @@
+#ifdef __linux__
 #include <sys/socket.h>
+#elif _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 #include <stdint.h>
 #include <string>
 #include <arpa/inet.h>
@@ -45,9 +50,19 @@ struct TCPPacket {
     unsigned char *options;
     unsigned char *data;
     uint32_t truesize;
+    TCPPacket() {
+        ;
+    }
     ~TCPPacket() {
         delete[] this->options;
         delete[] this->data;
+    }
+    TCPPacket(const TCPPacket &packet) {
+        memcpy(this, &packet, SIZEOFTCP);
+        this->options = new unsigned char[packet.offset - SIZEOFTCP];
+        memcpy(this->options, packet.options, packet.offset - SIZEOFTCP);
+        this->data = new unsigned char[packet.truesize - packet.offset];
+        memcpy(this->data, packet.data, packet.truesize - packet.offset);
     }
     std::string ToString();
 };
@@ -66,8 +81,16 @@ struct IPv4Packet {
     unsigned char options[40];
     unsigned char *data;
     uint32_t truesize;
+    IPv4Packet() {
+        ;
+    }
     ~IPv4Packet() {
         delete[] this->data;
+    }
+    IPv4Packet(const IPv4Packet &packet) {
+        memcpy(this, &packet, SIZEOFIPV4);
+        this->data = new unsigned char[packet.length - SIZEOFIPV4];
+        memcpy(this->data, packet.data, packet.length - SIZEOFIPV4);
     }
     TCPPacket GetTCP() const;
     std::string ToString();
@@ -79,8 +102,16 @@ struct EthernetFrame {
     unsigned char lengthtype[2];
     unsigned char *data;
     uint32_t truesize;
+    EthernetFrame() {
+        ;
+    }
     ~EthernetFrame() {
         delete[] this->data;
+    }
+    EthernetFrame(const EthernetFrame &packet) {
+        memcpy(this, &packet, SIZEOFIPV4);
+        this->data = new unsigned char[packet.truesize - SIZEOFIPV4];
+        memcpy(this->data, packet.data, packet.truesize - SIZEOFIPV4);
     }
     void ParseVec(const std::vector<unsigned char> frame);
     IPv4Packet GetIPv4() const;

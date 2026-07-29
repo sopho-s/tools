@@ -4,5 +4,6 @@ pkgs.mkShell {
         cmake
         gcc
         docker
+        act
     ];
 }

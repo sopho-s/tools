@@ -34,7 +34,7 @@ void EncryptAES128(unsigned char* data, unsigned char* key);
 void InvSubBytes128(unsigned char *data, unsigned char sbox[]);
 void InvShiftRows128(unsigned char *data);
 void InvMixColumns128(unsigned char *data);
-void DecryptAES128(unsigned char* data);
+void DecryptAES128(unsigned char* data, unsigned char* key);
 
 void CTRDRBGUpdate(AESState &state, uint8_t seedmaterial[]);
 AESState AESPRNGInit(uint32_t seed);
