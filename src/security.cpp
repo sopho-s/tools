@@ -10,7 +10,7 @@ namespace tools
     using namespace tools::exceptions;
     using namespace tools::util;
 
-#ifdef __linux__0
+#ifdef __linux__
         bool AmIRoot()
         {
             return geteuid() == 0;
