@@ -1,29 +1,40 @@
-#ifdef __linux__
-#include <sys/socket.h>
-#elif _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
 #include <stdint.h>
 #include <string>
-#include <arpa/inet.h>
 #include "exceptions.h"
 #include "util.h"
+#include <vector>
+#ifdef __linux__
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <net/ethernet.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <netpacket/packet.h>
-#include <vector>
+#elif _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <pcap.h>
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <stdio.h>
+#pragma comment(lib, "Ws2_32.lib")
+#endif
 #pragma once
 
 #define ETHER_TYPE_IPv4 0x0800 /**< IPv4 Protocol. */
 #define ETHER_TYPE_IPv6 0x86DD /**< IPv6 Protocol. */
-#define ETHER_TYPE_ARP  0x0806 /**< Arp Protocol. */
+#define ETHER_TYPE_ARP 0x0806  /**< Arp Protocol. */
 #define ETHER_TYPE_RARP 0x8035 /**< Reverse Arp Protocol. */
 #define ETHER_TYPE_VLAN 0x8100 /**< IEEE 802.1Q VLAN tagging. */
 #define ETHER_TYPE_1588 0x88F7 /**< IEEE 802.1AS 1588 Precise Time Protocol. */
 #define ETHER_TYPE_SLOW 0x8809 /**< Slow protocols (LACP and Marker). */
-#define ETHER_TYPE_TEB  0x6558 /**< Transparent Ethernet Bridging. */
+#define ETHER_TYPE_TEB 0x6558  /**< Transparent Ethernet Bridging. */
 
 #define SIZEOFETH 14
 #define SIZEOFIPV4 24
@@ -37,96 +48,137 @@
 #define RESERVED3 (uint32_t)0xf0000000
 #define RESERVED3RANGE 4
 
-struct TCPPacket {
-    uint16_t source;
-    uint16_t dest;
-    uint32_t sequencenumber;
-    uint32_t acknumber;
-    unsigned char offset;
-    unsigned char flags;
-    uint16_t window;
-    uint16_t checksum;
-    uint16_t urgentptr;
-    unsigned char *options;
-    unsigned char *data;
-    uint32_t truesize;
-    TCPPacket() {
-        ;
-    }
-    ~TCPPacket() {
-        delete[] this->options;
-        delete[] this->data;
-    }
-    TCPPacket(const TCPPacket &packet) {
-        memcpy(this, &packet, SIZEOFTCP);
-        this->options = new unsigned char[packet.offset - SIZEOFTCP];
-        memcpy(this->options, packet.options, packet.offset - SIZEOFTCP);
-        this->data = new unsigned char[packet.truesize - packet.offset];
-        memcpy(this->data, packet.data, packet.truesize - packet.offset);
-    }
-    std::string ToString();
-};
+#ifdef _WIN32
 
-struct IPv4Packet {
-    unsigned char vihl;
-    unsigned char tos;
-    uint16_t length;
-    unsigned char identification[2];
-    uint16_t flagfrag;
-    unsigned char ttl;
-    unsigned char protocol;
-    unsigned char checksum[2];
-    uint32_t source;
-    uint32_t dest;
-    unsigned char options[40];
-    unsigned char *data;
-    uint32_t truesize;
-    IPv4Packet() {
-        ;
-    }
-    ~IPv4Packet() {
-        delete[] this->data;
-    }
-    IPv4Packet(const IPv4Packet &packet) {
-        memcpy(this, &packet, SIZEOFIPV4);
-        this->data = new unsigned char[packet.length - SIZEOFIPV4];
-        memcpy(this->data, packet.data, packet.length - SIZEOFIPV4);
-    }
-    TCPPacket GetTCP() const;
-    std::string ToString();
-};
+int init()
+{
+    WSADATA wsaData;
+    int iResult;
 
-struct EthernetFrame {
-    unsigned char dest[6];
-    unsigned char source[6];
-    unsigned char lengthtype[2];
-    unsigned char *data;
-    uint32_t truesize;
-    EthernetFrame() {
-        ;
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0)
+    {
+        printf("WSAStartup failed: %d\n", iResult);
+        return 1;
     }
-    ~EthernetFrame() {
-        delete[] this->data;
-    }
-    EthernetFrame(const EthernetFrame &packet) {
-        memcpy(this, &packet, SIZEOFIPV4);
-        this->data = new unsigned char[packet.truesize - SIZEOFIPV4];
-        memcpy(this->data, packet.data, packet.truesize - SIZEOFIPV4);
-    }
-    void ParseVec(const std::vector<unsigned char> frame);
-    IPv4Packet GetIPv4() const;
-    std::string ToString();
-};
+    return 0;
+}
 
-class RawSocket {
-    private:
-        int32_t fd;
-    public:
-        RawSocket();
-        RawSocket(const std::string &interface);
-        ~RawSocket();
-        std::vector<unsigned char> ReceivePacketRaw();
-        EthernetFrame ReceivePacket();
-        void SendPacketRaw(const std::vector<unsigned char> &packet);
-        void SendPacket(const EthernetFrame &eth);
-};
+int intialised = init();
+
+#endif
+
+namespace tools
+{
+    namespace networking
+    {
+
+        struct TCPPacket
+        {
+            uint16_t source;
+            uint16_t dest;
+            uint32_t sequencenumber;
+            uint32_t acknumber;
+            unsigned char offset;
+            unsigned char flags;
+            uint16_t window;
+            uint16_t checksum;
+            uint16_t urgentptr;
+            unsigned char *options;
+            unsigned char *data;
+            uint32_t truesize;
+            TCPPacket()
+            {
+                ;
+            }
+            ~TCPPacket()
+            {
+                delete[] this->options;
+                delete[] this->data;
+            }
+            TCPPacket(const TCPPacket &packet)
+            {
+                memcpy(this, &packet, SIZEOFTCP);
+                this->options = new unsigned char[packet.offset - SIZEOFTCP];
+                memcpy(this->options, packet.options, packet.offset - SIZEOFTCP);
+                this->data = new unsigned char[packet.truesize - packet.offset];
+                memcpy(this->data, packet.data, packet.truesize - packet.offset);
+            }
+            std::string ToString();
+        };
+
+        struct IPv4Packet
+        {
+            unsigned char vihl;
+            unsigned char tos;
+            uint16_t length;
+            unsigned char identification[2];
+            uint16_t flagfrag;
+            unsigned char ttl;
+            unsigned char protocol;
+            unsigned char checksum[2];
+            uint32_t source;
+            uint32_t dest;
+            unsigned char options[40];
+            unsigned char *data;
+            uint32_t truesize;
+            IPv4Packet()
+            {
+                ;
+            }
+            ~IPv4Packet()
+            {
+                delete[] this->data;
+            }
+            IPv4Packet(const IPv4Packet &packet)
+            {
+                memcpy(this, &packet, SIZEOFIPV4);
+                this->data = new unsigned char[packet.length - SIZEOFIPV4];
+                memcpy(this->data, packet.data, packet.length - SIZEOFIPV4);
+            }
+            TCPPacket GetTCP() const;
+            std::string ToString();
+        };
+
+        struct EthernetFrame
+        {
+            unsigned char dest[6];
+            unsigned char source[6];
+            unsigned char lengthtype[2];
+            unsigned char *data;
+            uint32_t truesize;
+            EthernetFrame()
+            {
+                ;
+            }
+            ~EthernetFrame()
+            {
+                delete[] this->data;
+            }
+            EthernetFrame(const EthernetFrame &packet)
+            {
+                memcpy(this, &packet, SIZEOFIPV4);
+                this->data = new unsigned char[packet.truesize - SIZEOFIPV4];
+                memcpy(this->data, packet.data, packet.truesize - SIZEOFIPV4);
+            }
+            void ParseVec(const std::vector<unsigned char> frame);
+            IPv4Packet GetIPv4() const;
+            std::string ToString();
+        };
+
+        class RawSocket
+        {
+        private:
+            int32_t fd;
+
+        public:
+            RawSocket();
+            RawSocket(const std::string &_interface);
+            ~RawSocket();
+            std::vector<unsigned char> ReceivePacketRaw();
+            EthernetFrame ReceivePacket();
+            void SendPacketRaw(const std::vector<unsigned char> &packet);
+            void SendPacket(const EthernetFrame &eth);
+        };
+    }
+}

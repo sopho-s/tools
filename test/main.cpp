@@ -7,19 +7,35 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 #include <cstring>
+#ifdef __linux__
 #include <unistd.h>
+#endif
+#ifdef _WIN32
+#ifdef GetCurrentDirectory
+#undef GetCurrentDirectory
+#define ETH_FRAME_LEN	1514
+#endif
+#endif
+
+using namespace tools::command;
+using namespace tools::crypto;
+using namespace tools::exceptions;
+using namespace tools::io;
+using namespace tools::networking;
+using namespace tools::security;
+using namespace tools::util;
 
 // IO TESTS
 
 TEST_CASE("Get current directory")
 {
-    std::string cd = GetCurrentDirectory();
+    std::string cd = tools::io::GetCurrentDirectory();
     REQUIRE(cd == std::filesystem::current_path());
 }
 
 TEST_CASE("Get current directory fileobject")
 {
-    std::string cd = GetCurrentDirectory();
+    std::string cd = tools::io::GetCurrentDirectory();
     FileObject *cdfo = GetFile(cd);
     REQUIRE(cdfo != nullptr);
     REQUIRE(!cdfo->isfile);
@@ -40,12 +56,12 @@ TEST_CASE("List current directory")
 
 TEST_CASE("List test directory")
 {
-    FileObject *cd = ListDirectory(std::filesystem::absolute("tests"));
+    FileObject *cd = ListDirectory(std::filesystem::absolute("tests").string());
     REQUIRE(!cd->isfile);
     Folder *collapsedcd = static_cast<Folder *>(cd);
     CHECK(collapsedcd->name == std::filesystem::absolute("tests"));
     REQUIRE(collapsedcd->fileamount == 2);
-    std::vector<std::string> files = {std::filesystem::absolute("tests/lowpermfolder"), std::filesystem::absolute("tests/highpermfolder")};
+    std::vector<std::string> files = {std::filesystem::absolute("tests/lowpermfolder").string(), std::filesystem::absolute("tests/highpermfolder").string()};
     for (int i = 0; i < files.size(); i++)
     {
         CHECK(collapsedcd->files[i]->name == files[i]);
@@ -55,23 +71,23 @@ TEST_CASE("List test directory")
 
 TEST_CASE("Check listing high perm folder produces correct error")
 {
-    CHECK_THROWS_AS(ListDirectory(std::filesystem::absolute("tests/highpermfolder")), ExecuteNotPermitted);
+    CHECK_THROWS_AS(ListDirectory(std::filesystem::absolute("tests/highpermfolder").string()), ExecuteNotPermitted);
 }
 
 TEST_CASE("Check reading low perm file in high perm folder produces correct error")
 {
-    CHECK_THROWS_AS(ReadFile(std::filesystem::absolute("tests/highpermfolder/folder/folder/lowpermfile")), AccessNotPermitted);
+    CHECK_THROWS_AS(ReadFile(std::filesystem::absolute("tests/highpermfolder/folder/folder/lowpermfile").string()), AccessNotPermitted);
 }
 
 TEST_CASE("Check listing low perm folder in high perm folder produces correct error")
 {
-    CHECK_THROWS_AS(ListDirectory(std::filesystem::absolute("tests/highpermfolder/folder")), ExecuteNotPermitted);
+    CHECK_THROWS_AS(ListDirectory(std::filesystem::absolute("tests/highpermfolder/folder").string()), ExecuteNotPermitted);
 }
 
 TEST_CASE("Recursively list with depth 0 returns bare folder without children")
 {
     // depth 0 falls through to GetFile(), so no child enumeration occurs
-    FileObject *result = ListDirectoryRecursive(std::filesystem::absolute("tests"), 0);
+    FileObject *result = ListDirectoryRecursive(std::filesystem::absolute("tests").string(), 0);
     REQUIRE(result != nullptr);
     REQUIRE(!result->isfile);
     Folder *folder = static_cast<Folder *>(result);
@@ -82,7 +98,7 @@ TEST_CASE("Recursively list with depth 0 returns bare folder without children")
 TEST_CASE("Recursively list depth 1 on tests/ returns top-level entries only")
 {
     // depth 1 lists tests/ children, then calls depth 0 on each — never tries to enter highpermfolder
-    FileObject *result = ListDirectoryRecursive(std::filesystem::absolute("tests"), 1);
+    FileObject *result = ListDirectoryRecursive(std::filesystem::absolute("tests").string(), 1);
     REQUIRE(result != nullptr);
     REQUIRE(!result->isfile);
     Folder *folder = static_cast<Folder *>(result);
@@ -219,7 +235,7 @@ TEST_CASE("ReadFile on a root-only file throws ReadNotPermitted")
 
 TEST_CASE("ListDirectory on lowpermfolder returns one entry (the folder/ subdir)")
 {
-    FileObject *cd = ListDirectory(std::filesystem::absolute("tests/lowpermfolder"));
+    FileObject *cd = ListDirectory(std::filesystem::absolute("tests/lowpermfolder").string());
     REQUIRE(!cd->isfile);
     Folder *folder = static_cast<Folder *>(cd);
     REQUIRE(folder->fileamount == 1);
@@ -283,9 +299,9 @@ TEST_CASE("File ToString contains name, permissions, owner, and size")
 
 TEST_CASE("Check permission on high perms folder")
 {
-    CHECK(!CanRead(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder")));
-    CHECK(!CanWrite(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder")));
-    CHECK(!CanExecute(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder")));
+    CHECK(!CanRead(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder").string()));
+    CHECK(!CanWrite(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder").string()));
+    CHECK(!CanExecute(GetCurrentUser(), std::filesystem::absolute("tests/highpermfolder").string()));
 }
 
 TEST_CASE("Checks if you can grab group file")
@@ -650,6 +666,7 @@ TEST_CASE("Execute with exit 0 command succeeds")
     CHECK(true);
 }
 
+#ifdef __linux__
 // ADDITIONAL SECURITY TESTS
 
 TEST_CASE("AmIRoot returns false for non-root user")
@@ -661,6 +678,7 @@ TEST_CASE("AmIRoot returns false for non-root user")
         CHECK(AmIRoot());
     }
 }
+#endif
 
 TEST_CASE("GetUser for non-existent user throws")
 {
@@ -737,6 +755,7 @@ TEST_CASE("RawSocket on bogus interface throws", "[network]")
     CHECK_THROWS([]() { RawSocket s("definitely_not_a_real_iface_xyz123"); }());
 }
 
+#ifdef __linux__
 TEST_CASE("RawSocket on bogus interface throws SocketFailedToOpen when non-root", "[network]")
 {
     if (geteuid() == 0) {
@@ -748,6 +767,7 @@ TEST_CASE("RawSocket on bogus interface throws SocketFailedToOpen when non-root"
         SocketFailedToOpen
     );
 }
+#endif
 
 TEST_CASE("ReceivePacketRaw on default-constructed RawSocket throws PacketReceiveError", "[network]")
 {
@@ -791,6 +811,7 @@ TEST_CASE("RawSocket on empty interface name throws", "[network]")
     CHECK_THROWS([]() { RawSocket s(""); }());
 }
 
+#ifdef __linux__
 TEST_CASE("RawSocket on empty interface throws SocketFailedToOpen when non-root", "[network]")
 {
     if (geteuid() == 0) {
@@ -831,6 +852,7 @@ TEST_CASE("RawSocket on bogus interface throws NoInterfaceIndex when root", "[ne
         NoInterfaceIndex
     );
 }
+#endif
 
 TEST_CASE("RawSocket repeated failed construction does not crash", "[network]")
 {
@@ -840,12 +862,14 @@ TEST_CASE("RawSocket repeated failed construction does not crash", "[network]")
     }
 }
 
+#ifdef __linux__
 TEST_CASE("RawSocket with interface name at IFNAMSIZ boundary throws", "[network]")
 {
     // IFNAMSIZ is typically 16; pad to that length to exercise boundary handling.
     std::string name(IFNAMSIZ - 1, 'z');
     CHECK_THROWS([&]() { RawSocket s(name); }());
 }
+#endif
 
 TEST_CASE("Multiple default-constructed RawSockets destruct independently", "[network]")
 {
@@ -865,6 +889,7 @@ TEST_CASE("SendPacket on default-constructed RawSocket throws PacketSendError", 
     CHECK_THROWS_AS(s.SendPacket(eth), PacketSendError);
 }
 
+#ifdef __linux__
 TEST_CASE("RawSocket on each available interface throws SocketFailedToOpen when non-root", "[network]")
 {
     if (geteuid() == 0) {
@@ -979,3 +1004,4 @@ TEST_CASE("RawSocket on bogus interface does not leak fds when root", "[network]
     // After many failures, a real open on lo must still succeed.
     CHECK_NOTHROW([]() { RawSocket s("lo"); }());
 }
+#endif

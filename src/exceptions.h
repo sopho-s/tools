@@ -1,178 +1,233 @@
+
+#ifdef __linux__
 #include <bits/stdc++.h>
+#endif
+#include <stdexcept>
 #pragma once
 
-/// @brief Thrown when a type is either intentionally or unintentionally unsupported
-class Unsupported : public std::exception {
-    private:
-        std::string message;
-    public:
-        Unsupported(const char* msg) : message(msg) {}
+namespace tools
+{
+    namespace exceptions
+    {
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        /// @brief Thrown when a type is either intentionally or unintentionally unsupported
+        class Unsupported : public std::exception
+        {
+        private:
+            std::string message;
 
-/// @brief Thrown when a file given does not exist
-class FileDoesntExist : public std::exception {
-    private:
-        std::string message;
-    public:
-        FileDoesntExist(const char* msg) : message(msg) {}
+        public:
+            Unsupported(const char *msg) : message(msg) {}
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-/// @brief Thrown when a user given does not exist
-class UserDoesntExist : public std::exception {
-    private:
-        std::string message;
-    public:
-        UserDoesntExist(const char* msg) : message(msg) {}
+        /// @brief Thrown when a file given does not exist
+        class FileDoesntExist : public std::exception
+        {
+        private:
+            std::string message;
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        public:
+            FileDoesntExist(const char *msg) : message(msg) {}
 
-/// @brief Thrown when a file (directory, regular, block, etc) is not of the correct type
-class InvalidFileType : public std::exception {
-    private:
-        std::string message;
-    public:
-        InvalidFileType(const char* msg) : message(msg) {}
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        /// @brief Thrown when a user given does not exist
+        class UserDoesntExist : public std::exception
+        {
+        private:
+            std::string message;
 
-/// @brief Thrown when trying to read a file without the correct permissions
-class ReadNotPermitted : public std::exception {
-    private:
-        std::string message;
-    public:
-        ReadNotPermitted(const char* msg) : message(msg) {}
+        public:
+            UserDoesntExist(const char *msg) : message(msg) {}
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-/// @brief Thrown when trying to execute a file without the correct permissions
-class ExecuteNotPermitted : public std::exception {
-    private:
-        std::string message;
-    public:
-        ExecuteNotPermitted(const char* msg) : message(msg) {}
+        /// @brief Thrown when a file (directory, regular, block, etc) is not of the correct type
+        class InvalidFileType : public std::exception
+        {
+        private:
+            std::string message;
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        public:
+            InvalidFileType(const char *msg) : message(msg) {}
 
-/// @brief Thrown when trying to write to a file without the correct permissions
-class WriteNotPermitted : public std::exception {
-    private:
-        std::string message;
-    public:
-        WriteNotPermitted(const char* msg) : message(msg) {}
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        /// @brief Thrown when trying to read a file without the correct permissions
+        class ReadNotPermitted : public std::exception
+        {
+        private:
+            std::string message;
 
-/// @brief Thrown when trying to access a file but it was unknown where in the folder chain it was that blocked you from accessing the file
-class AccessNotPermitted : public std::exception {
-    private:
-        std::string message;
-    public:
-        AccessNotPermitted(const char* msg) : message(msg) {}
+        public:
+            ReadNotPermitted(const char *msg) : message(msg) {}
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
+        /// @brief Thrown when trying to execute a file without the correct permissions
+        class ExecuteNotPermitted : public std::exception
+        {
+        private:
+            std::string message;
 
-class PermissionObjectDoesntExist : public std::exception {
-    private:
-        std::string message;
-    public:
-        PermissionObjectDoesntExist(const char* msg) : message(msg) {}
+        public:
+            ExecuteNotPermitted(const char *msg) : message(msg) {}
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-// NETWORKING ERRORS
+        /// @brief Thrown when trying to write to a file without the correct permissions
+        class WriteNotPermitted : public std::exception
+        {
+        private:
+            std::string message;
 
-class SocketFailedToOpen : public std::exception {
-    private:
-        std::string message;
-    public:
-        SocketFailedToOpen(const char* msg) : message(msg) {}
+        public:
+            WriteNotPermitted(const char *msg) : message(msg) {}
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-class NoInterfaceIndex : public std::exception {
-    private:
-        std::string message;
-    public:
-        NoInterfaceIndex(const char* msg) : message(msg) {}
+        /// @brief Thrown when trying to access a file but it was unknown where in the folder chain it was that blocked you from accessing the file
+        class AccessNotPermitted : public std::exception
+        {
+        private:
+            std::string message;
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        public:
+            AccessNotPermitted(const char *msg) : message(msg) {}
 
-class BindError : public std::exception {
-    private:
-        std::string message;
-    public:
-        BindError(const char* msg) : message(msg) {}
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        class PermissionObjectDoesntExist : public std::exception
+        {
+        private:
+            std::string message;
 
-class PacketReceiveError : public std::exception {
-    private:
-        std::string message;
-    public:
-        PacketReceiveError(const char* msg) : message(msg) {}
+        public:
+            PermissionObjectDoesntExist(const char *msg) : message(msg) {}
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
 
-class PacketSendError : public std::exception {
-    private:
-        std::string message;
-    public:
-        PacketSendError(const char* msg) : message(msg) {}
+        // NETWORKING ERRORS
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+        class SocketFailedToOpen : public std::exception
+        {
+        private:
+            std::string message;
 
-class NetworkSizeMismatch : public std::exception {
-    private:
-        std::string message;
-    public:
-        NetworkSizeMismatch(const char* msg) : message(msg) {}
+        public:
+            SocketFailedToOpen(const char *msg) : message(msg) {}
 
-        const char* what() const noexcept {
-            return message.c_str();
-        }
-};
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
+
+        class NoInterfaceIndex : public std::exception
+        {
+        private:
+            std::string message;
+
+        public:
+            NoInterfaceIndex(const char *msg) : message(msg) {}
+
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
+
+        class BindError : public std::exception
+        {
+        private:
+            std::string message;
+
+        public:
+            BindError(const char *msg) : message(msg) {}
+
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
+
+        class PacketReceiveError : public std::exception
+        {
+        private:
+            std::string message;
+
+        public:
+            PacketReceiveError(const char *msg) : message(msg) {}
+
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
+
+        class PacketSendError : public std::exception
+        {
+        private:
+            std::string message;
+
+        public:
+            PacketSendError(const char *msg) : message(msg) {}
+
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
+
+        class NetworkSizeMismatch : public std::exception
+        {
+        private:
+            std::string message;
+
+        public:
+            NetworkSizeMismatch(const char *msg) : message(msg) {}
+
+            const char *what() const noexcept
+            {
+                return message.c_str();
+            }
+        };
+    }
+}
