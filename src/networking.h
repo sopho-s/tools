@@ -50,7 +50,7 @@
 
 #ifdef _WIN32
 
-int init()
+inline int init()
 {
     WSADATA wsaData;
     int iResult;
@@ -64,7 +64,7 @@ int init()
     return 0;
 }
 
-int intialised = init();
+inline int intialised = init();
 
 #endif
 
@@ -169,7 +169,11 @@ namespace tools
         class RawSocket
         {
         private:
+#ifdef __linux__
             int32_t fd;
+#elif _WIN32
+            pcap_t *handle;
+#endif
 
         public:
             RawSocket();

@@ -13,6 +13,13 @@ FetchContent_MakeAvailable(Catch2)
 
 add_subdirectory(src)
 
+if(WIN32)
+    find_path(NPCAP_INCLUDE_DIR pcap.h PATHS "C:/npcap-sdk/Include")
+    find_library(NPCAP_LIB wpcap PATHS "C:/npcap-sdk/Lib/x64")
+    target_link_libraries(toollib PUBLIC ${NPCAP_LIB} ws2_32)
+    target_include_directories(toollib PUBLIC ${NPCAP_INCLUDE_DIR})
+endif()
+
 add_executable(testtool test/main.cpp)
 target_link_libraries(testtool toollib Catch2::Catch2WithMain)
 

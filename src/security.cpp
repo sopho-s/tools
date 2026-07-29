@@ -20,6 +20,7 @@ namespace tools
         void SetFilePermissions(std::string directory, int perms);
         void SetFileOwner(std::string directory, std::string owner);
 
+        #ifdef __linux__
         bool IsOwner(User user, std::string file)
         {
             struct stat info;
@@ -45,6 +46,17 @@ namespace tools
             }
             return false;
         }
+        #elif _WIN32
+        bool IsOwner(User user, std::string file)
+        {
+            return false;
+        }
+
+        bool IsGroupOwner(User user, std::string file)
+        {
+            return false;
+        }
+        #endif
 
         bool CanRead(User user, std::string file)
         {
@@ -148,9 +160,10 @@ namespace tools
 
         User GetCurrentUser()
         {
-            return GetUser(Execute("whoami"));
+            return GetUser(Split(Execute("whoami"), "\\")[1]);
         }
 
+        #ifdef __linux__
         User GetUser(std::string user)
         {
             std::string output = Execute("id " + user);
@@ -232,6 +245,7 @@ namespace tools
             }
             return groups;
         }
+
         Group GetGroup(std::string groupstr)
         {
             std::string directory = "/etc/group";
@@ -291,6 +305,53 @@ namespace tools
                 }
             }
             throw PermissionObjectDoesntExist("Specified group does not exist");
+        }
+        #elif _WIN32
+        User GetUser(std::string user)
+        {
+            std::string output = Execute("net USER " + RecursiveReplace(user, "\n", ""));
+            if (output.find("The user name could not be found.") != std::string::npos)
+            {
+                throw UserDoesntExist("Given user does not exist");
+            }
+            User userobj;
+            std::vector<std::string> splits = Split(RecursiveReplace(RecursiveReplace(output, "  ", " "), "-", ""), "\n");
+            userobj.name = user;
+            for (int i = 0; i < Split(splits[20], " ").size() - 1; i++) {
+                userobj.groups.push_back(Split(splits[20], " ")[i+1].substr(i+1, Split(splits[20], " ")[i+1].size() - 1));
+            }
+            return userobj;
+        }
+        #endif
+
+        Group GetGroup(std::string groupstr)
+        {
+            std::string output = Execute("net LOCALGROUP " + groupstr);
+            if (output.find("The specified local group does not exist.") != std::string::npos)
+            {
+                throw PermissionObjectDoesntExist("Specified group does not exist");
+            }
+            Group groupobj;
+            std::vector<std::string> splits = Split(RecursiveReplace(RecursiveReplace(output, "  ", " "), "-", ""), "\n");
+            groupobj.name = groupstr;
+            groupobj.groupsize = splits.size() - 7;
+            groupobj.usersingroup = new User[groupobj.groupsize];
+            for (int i = 6; i < splits.size() - 1; i++) {
+                User user = GetUser(splits[i]);
+                groupobj.usersingroup[i-6] = user;
+            }
+            return groupobj;
+        }
+
+        std::vector<Group> GetGroups()
+        {
+            std::string output = Execute("net LOCALGROUP");
+            std::vector<std::string> splits = Split(RecursiveReplace(RecursiveReplace(output, "-", ""), "*", ""), "\n");
+            std::vector<Group> groups;
+            for (int i = 4; i < splits.size() - 1; i++) {
+                groups.push_back(GetGroup(splits[i]));
+            }
+            return groups;
         }
     }
 }

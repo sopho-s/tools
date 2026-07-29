@@ -309,12 +309,14 @@ TEST_CASE("Checks if you can grab group file")
     CHECK_NOTHROW(GetGroups());
 }
 
+#ifdef __linux__
 TEST_CASE("Checks if root group exists")
 {
     CHECK(GetGroup("root").groupid == 0);
     CHECK(GetGroup("root").name == "root");
     CHECK(GetGroup("root").groupsize == 0);
 }
+#endif
 
 TEST_CASE("CanRead returns true for a world-readable file")
 {
@@ -379,12 +381,14 @@ TEST_CASE("GetCurrentUser returns a valid user with a non-empty name and at leas
     CHECK(u.groupamount > 0);
 }
 
+#ifdef __linux__
 TEST_CASE("GetUser for root has uuid 0 and name root")
 {
     User root = GetUser("root");
     CHECK(root.uuid == 0);
     CHECK(root.name == "root");
 }
+#endif
 
 TEST_CASE("GetGroup for non-existent group throws PermissionObjectDoesntExist")
 {
@@ -574,7 +578,7 @@ TEST_CASE("DecryptAES128 undoes the encryption")
 TEST_CASE("split with single delimiter")
 {
     std::string s = "hello,world";
-    std::vector<std::string> result = split(s, ",");
+    std::vector<std::string> result = Split(s, ",");
     REQUIRE(result.size() == 2);
     CHECK(result[0] == "hello");
     CHECK(result[1] == "world");
@@ -583,7 +587,7 @@ TEST_CASE("split with single delimiter")
 TEST_CASE("split with no delimiter present")
 {
     std::string s = "helloworld";
-    std::vector<std::string> result = split(s, ",");
+    std::vector<std::string> result = Split(s, ",");
     REQUIRE(result.size() == 1);
     CHECK(result[0] == "helloworld");
 }
@@ -591,7 +595,7 @@ TEST_CASE("split with no delimiter present")
 TEST_CASE("split with multiple delimiters")
 {
     std::string s = "a:b:c:d";
-    std::vector<std::string> result = split(s, ":");
+    std::vector<std::string> result = Split(s, ":");
     REQUIRE(result.size() == 4);
     CHECK(result[0] == "a");
     CHECK(result[1] == "b");
@@ -602,7 +606,7 @@ TEST_CASE("split with multiple delimiters")
 TEST_CASE("split with multi-character delimiter")
 {
     std::string s = "foo||bar||baz";
-    std::vector<std::string> result = split(s, "||");
+    std::vector<std::string> result = Split(s, "||");
     REQUIRE(result.size() == 3);
     CHECK(result[0] == "foo");
     CHECK(result[1] == "bar");
@@ -612,7 +616,7 @@ TEST_CASE("split with multi-character delimiter")
 TEST_CASE("split empty string returns single empty element")
 {
     std::string s = "";
-    std::vector<std::string> result = split(s, ",");
+    std::vector<std::string> result = Split(s, ",");
     REQUIRE(result.size() == 0);
 }
 
@@ -638,6 +642,8 @@ TEST_CASE("PadTo with integers")
     delete[] result;
 }
 
+
+#ifdef __linux__
 // COMMAND TESTS
 
 TEST_CASE("Execute returns output from simple command")
@@ -653,6 +659,7 @@ TEST_CASE("Execute captures multi-line output")
     CHECK(result.find("line2") != std::string::npos);
 }
 
+
 TEST_CASE("Execute with pwd returns a path")
 {
     std::string result = Execute("pwd");
@@ -665,8 +672,6 @@ TEST_CASE("Execute with exit 0 command succeeds")
     // Should not throw, result may be empty
     CHECK(true);
 }
-
-#ifdef __linux__
 // ADDITIONAL SECURITY TESTS
 
 TEST_CASE("AmIRoot returns false for non-root user")

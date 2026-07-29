@@ -22,14 +22,23 @@ namespace tools
 {
     namespace security
     {
+        #ifdef _WIN32
+        #define WELL_KNOWN_GROUP 0b1
+        #define ALIAS 0b10
+        #define LABEL 0b100
+        #endif
         /// @brief Represents a system user with identity and group membership information
         struct User
         {
-            unsigned int uuid;                   ///< User ID
+            #ifdef __linux__
             unsigned int guid;                   ///< Group ID of the user's primary group
-            std::string name;                    ///< Username
             std::pair<int, std::string> *groups; ///< Array of (gid, name) pairs for all groups the user belongs to
+            unsigned int uuid;                   ///< User ID
+            #elif _WIN32
+            std::vector<std::string> groups;
+            #endif
             int groupamount;                     ///< Number of entries in the groups array
+            std::string name;                    ///< Username
             ~User()
             {
                 ;
@@ -39,7 +48,9 @@ namespace tools
         /// @brief Represents a system group and its member users
         struct Group
         {
+            #ifdef __linux__
             int groupid;
+            #endif
             std::string name;   ///< Group name
             User *usersingroup; ///< Array of users belonging to this group
             int groupsize;      ///< Number of users in the group

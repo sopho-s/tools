@@ -119,6 +119,71 @@ namespace tools
             }
         }
 #elif _WIN32
+        RawSocket::RawSocket()
+        {
+            this->handle = nullptr;
+        }
+
+        RawSocket::RawSocket(const std::string &_interface)
+        {
+            char errbuf[PCAP_ERRBUF_SIZE];
+            this->handle = pcap_open_live(_interface.c_str(), 65536, 1, 1000, errbuf);
+            if (this->handle == nullptr)
+            {
+                throw SocketFailedToOpen("Could not open socket");
+            }
+        }
+        
+
+        RawSocket::~RawSocket()
+        {
+            if (this->handle != nullptr)
+            {
+                pcap_close(this->handle);
+            }
+        }
+
+        
+        std::vector<unsigned char> RawSocket::ReceivePacketRaw()
+        {
+            struct pcap_pkthdr *header;
+            const unsigned char *data;
+            int res = pcap_next_ex(this->handle, &header, &data);
+            if (res == 0)
+            {
+                throw PacketReceiveError("Timeout expired");
+            }
+            else if (res < 0)
+            {
+                throw PacketReceiveError("Failed to receive packet");
+            }
+            std::vector<unsigned char> packet(data, data + header->len);
+            return packet;
+        }
+
+        EthernetFrame RawSocket::ReceivePacket()
+        {
+            std::vector<unsigned char> packet = this->ReceivePacketRaw();
+            EthernetFrame eth;
+            eth.ParseVec(packet);
+            return eth;
+        }
+
+        void RawSocket::SendPacketRaw(const std::vector<unsigned char> &packet)
+        {
+            if (pcap_sendpacket(this->handle, packet.data(), packet.size()) != 0)
+            {
+                throw PacketSendError("Failed to send packet");
+            }
+        }
+
+        void RawSocket::SendPacket(const EthernetFrame &eth)
+        {
+            std::vector<unsigned char> packet(SIZEOFETH + eth.truesize);
+            std::memcpy(packet.data(), &eth, SIZEOFETH);
+            std::memcpy(packet.data() + SIZEOFETH, eth.data, eth.truesize);
+            this->SendPacketRaw(packet);
+        }
 
 #endif
 

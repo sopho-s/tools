@@ -13,7 +13,8 @@ namespace tools
         template <typename T>
         T *PadTo(T *data, int curramount, int finalamount, T padval);
 
-        std::vector<std::string> split(std::string s, std::string delim);
+        std::vector<std::string> Split(std::string s, std::string delim);
+        std::string RecursiveReplace(std::string str, std::string from, std::string to);
 
         std::string ToHexString(const unsigned char data);
         std::string ToHexString(const unsigned char *data, const int amount);

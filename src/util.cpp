@@ -18,7 +18,7 @@ namespace tools
         template int *PadTo<int>(int *, int, int, int);
         template unsigned char *PadTo<unsigned char>(unsigned char *, int, int, unsigned char);
 
-        std::vector<std::string> split(std::string s, std::string delim)
+        std::vector<std::string> Split(std::string s, std::string delim)
         {
             std::vector<std::string> res;
             int pos = 0;
@@ -37,6 +37,24 @@ namespace tools
                 s.erase(0, pos + delim.size());
             }
             return res;
+        }
+        
+        std::string RecursiveReplace(std::string str, std::string from, std::string to) {
+            std::string newstr = str;
+            int lpointer = 0;
+            int rpointer = 0;
+            while (rpointer < newstr.size()) {
+                if (str[rpointer] != from[rpointer - lpointer]) {
+                    lpointer = rpointer + 1;
+                }
+                rpointer++;
+                if (lpointer - rpointer == from.size()) {
+                    newstr = newstr.substr(0, lpointer) + to + newstr.substr(rpointer + 1, str.size());
+                    lpointer -= from.size();
+                    rpointer = lpointer;
+                }
+            }
+            return newstr;
         }
 
         std::string ToHexString(const unsigned char data)
