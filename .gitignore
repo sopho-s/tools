@@ -2,3 +2,4 @@ build/
 CMakeFiles/
 bin/
 .vscode/
+act.exe

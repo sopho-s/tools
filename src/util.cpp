@@ -44,12 +44,12 @@ namespace tools
             int lpointer = 0;
             int rpointer = 0;
             while (rpointer < newstr.size()) {
-                if (str[rpointer] != from[rpointer - lpointer]) {
+                if (newstr[rpointer] != from[rpointer - lpointer]) {
                     lpointer = rpointer + 1;
                 }
                 rpointer++;
-                if (lpointer - rpointer == from.size()) {
-                    newstr = newstr.substr(0, lpointer) + to + newstr.substr(rpointer + 1, str.size());
+                if (rpointer - lpointer == from.size()) {
+                    newstr = newstr.substr(0, lpointer) + to + newstr.substr(rpointer, newstr.size() - rpointer);
                     lpointer -= from.size();
                     rpointer = lpointer;
                 }

@@ -160,7 +160,7 @@ namespace tools
 
         User GetCurrentUser()
         {
-            return GetUser(Split(Execute("whoami"), "\\")[1]);
+            return GetUser(RecursiveReplace(Split(Execute("whoami"), "\\")[1], "\n", ""));
         }
 
         #ifdef __linux__
