@@ -1,53 +1,59 @@
 name: windows-test
 on:
-  push:
-  pull_request:
+    push:
+    pull_request:
 jobs:
-  test:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up VS dev environment
-        uses: ilammy/msvc-dev-cmd@v1
+    test:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up VS dev environment
+              uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Install dependencies
-        run: |
-          choco install -y llvm cmake
-          echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        shell: pwsh
+            - name: Install dependencies
+              run: |
+                  choco install -y llvm cmake
+                  echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              shell: pwsh
 
-      - name: Set up test directory structure
-        run: |
-          New-Item -ItemType Directory -Force -Path "tests\highpermfolder\folder\folder"
-          New-Item -ItemType Directory -Force -Path "tests\lowpermfolder\folder\folder"
-          New-Item -ItemType File -Force -Path "tests\highpermfolder\folder\folder\highpermfile"
-          New-Item -ItemType File -Force -Path "tests\highpermfolder\folder\folder\lowpermfile"
-          New-Item -ItemType File -Force -Path "tests\lowpermfolder\folder\folder\highpermfile"
-          New-Item -ItemType File -Force -Path "tests\lowpermfolder\folder\folder\lowpermfile"
+            - name: Set up test directory structure
+              run: |
+                  New-Item -ItemType Directory -Force -Path "tests\highpermfolder\folder\folder"
+                  New-Item -ItemType Directory -Force -Path "tests\lowpermfolder\folder\folder"
+                  New-Item -ItemType File -Force -Path "tests\highpermfolder\folder\folder\highpermfile"
+                  New-Item -ItemType File -Force -Path "tests\highpermfolder\folder\folder\lowpermfile"
+                  New-Item -ItemType File -Force -Path "tests\lowpermfolder\folder\folder\highpermfile"
+                  New-Item -ItemType File -Force -Path "tests\lowpermfolder\folder\folder\lowpermfile"
 
-          # Reset inheritance and lock down "high perm" (owner-only) items
-          icacls "tests\highpermfolder" /inheritance:r /grant:r "Administrators:(OI)(CI)F" "SYSTEM:(OI)(CI)F"
-          icacls "tests\highpermfolder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
-          icacls "tests\highpermfolder\folder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
-          icacls "tests\highpermfolder\folder\folder\highpermfile" /inheritance:r /grant:r "Administrators:F" "SYSTEM:F"
-          icacls "tests\highpermfolder\folder\folder\lowpermfile" /inheritance:r /grant:r "Everyone:F"
+                  # Reset inheritance and lock down "high perm" (owner-only) items
+                  icacls "tests\highpermfolder" /inheritance:r /grant:r "Administrators:(OI)(CI)F" "SYSTEM:(OI)(CI)F"
+                  icacls "tests\highpermfolder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
+                  icacls "tests\highpermfolder\folder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
+                  icacls "tests\highpermfolder\folder\folder\highpermfile" /inheritance:r /grant:r "Administrators:F" "SYSTEM:F"
+                  icacls "tests\highpermfolder\folder\folder\lowpermfile" /inheritance:r /grant:r "Everyone:F"
 
-          icacls "tests\lowpermfolder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
-          icacls "tests\lowpermfolder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
-          icacls "tests\lowpermfolder\folder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
-          icacls "tests\lowpermfolder\folder\folder\highpermfile" /inheritance:r /grant:r "Administrators:F" "SYSTEM:F"
-          icacls "tests\lowpermfolder\folder\folder\lowpermfile" /inheritance:r /grant:r "Everyone:F"
-        shell: pwsh
+                  icacls "tests\lowpermfolder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
+                  icacls "tests\lowpermfolder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
+                  icacls "tests\lowpermfolder\folder\folder" /inheritance:r /grant:r "Everyone:(OI)(CI)F"
+                  icacls "tests\lowpermfolder\folder\folder\highpermfile" /inheritance:r /grant:r "Administrators:F" "SYSTEM:F"
+                  icacls "tests\lowpermfolder\folder\folder\lowpermfile" /inheritance:r /grant:r "Everyone:F"
+              shell: pwsh
 
-      - name: Create test user
-        run: |
-          $password = ConvertTo-SecureString "P@ssw0rd123!" -AsPlainText -Force
-          New-LocalUser -Name "testuser" -Password $password -PasswordNeverExpires:$true
-        shell: pwsh
-      - name: Configure CMake with AddressSanitizer
-        run: |
-            cmake -B build -S . -G "Ninja" `
-        shell: cmd
+            - name: Install Npcap SDK
+              run: |
+                  Invoke-WebRequest -Uri "https://npcap.com/dist/npcap-sdk-1.13.zip" -OutFile "npcap-sdk.zip"
+                  Expand-Archive -Path "npcap-sdk.zip" -DestinationPath "C:\npcap-sdk"
+              shell: pwsh
 
-      - name: Build
-        run: cmake
+            - name: Create test user
+              run: |
+                  $password = ConvertTo-SecureString "P@ssw0rd123!" -AsPlainText -Force
+                  New-LocalUser -Name "testuser" -Password $password -PasswordNeverExpires:$true
+              shell: pwsh
+            - name: Configure CMake with AddressSanitizer
+              run: |
+                  cmake -B build -S . -G "Ninja" `
+              shell: cmd
+
+            - name: Build
+              run: cmake
