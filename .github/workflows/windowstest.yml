@@ -47,9 +47,6 @@ jobs:
       - name: Configure CMake with AddressSanitizer
         run: |
             cmake -B build -S . -G "Ninja" `
-            -DCMAKE_CXX_COMPILER=cl `
-            -DCMAKE_CXX_FLAGS="/fsanitize=address /Zi /Od" `
-            -DCMAKE_BUILD_TYPE=Debug
         shell: cmd
 
       - name: Build
