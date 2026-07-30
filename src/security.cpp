@@ -46,6 +46,11 @@ namespace tools
             }
             return false;
         }
+        
+        User GetCurrentUser()
+        {
+            return GetUser(Execute("whoami"));
+        }
         #elif _WIN32
         bool IsOwner(User user, std::string file)
         {
@@ -56,7 +61,13 @@ namespace tools
         {
             return false;
         }
+        
+        User GetCurrentUser()
+        {
+            return GetUser(RecursiveReplace(Split(Execute("whoami"), "\\")[1], "\n", ""));
+        }
         #endif
+
 
         bool CanRead(User user, std::string file)
         {
@@ -158,10 +169,6 @@ namespace tools
             return false;
         }
 
-        User GetCurrentUser()
-        {
-            return GetUser(RecursiveReplace(Split(Execute("whoami"), "\\")[1], "\n", ""));
-        }
 
         #ifdef __linux__
         User GetUser(std::string user)

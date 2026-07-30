@@ -50,7 +50,7 @@ TEST_CASE("List current directory")
     REQUIRE(!cd->isfile);
     Folder *collapsedcd = static_cast<Folder *>(cd);
     CHECK(collapsedcd->name == std::filesystem::current_path());
-    REQUIRE(collapsedcd->fileamount == 9);
+    REQUIRE(collapsedcd->fileamount == 12);
     delete collapsedcd;
 }
 
