@@ -7,6 +7,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up VS dev environment
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install dependencies
         run: |
@@ -42,13 +44,13 @@ jobs:
           $password = ConvertTo-SecureString "P@ssw0rd123!" -AsPlainText -Force
           New-LocalUser -Name "testuser" -Password $password -PasswordNeverExpires:$true
         shell: pwsh
-
       - name: Configure CMake with AddressSanitizer
         run: |
-          cmake -B build -S . -G "Visual Studio 17 2022" -A x64 `
+            cmake -B build -S . -G "Ninja" `
+            -DCMAKE_CXX_COMPILER=cl `
             -DCMAKE_CXX_FLAGS="/fsanitize=address /Zi /Od" `
             -DCMAKE_BUILD_TYPE=Debug
-        shell: pwsh
+        shell: cmd
 
       - name: Build
         run: cmake
