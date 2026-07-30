@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstring>
+#include <algorithm>
 
 #pragma once
 #define WORDSIZE 4

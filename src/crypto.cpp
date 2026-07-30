@@ -202,7 +202,7 @@ namespace tools
                 unsigned char copy[] = {data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]};
                 for (int t = 0; t < 4; t++)
                 {
-                    data[i * 4] = copy[(t + i) % 4];
+                    data[i * 4 + t] = copy[(t + i) % 4];
                 }
             }
         }
@@ -226,7 +226,7 @@ namespace tools
         {
             unsigned char *roundkeys = ExpandRoundKey128(key);
             AddRoundKey128(data, roundkeys);
-            for (int i = 0; i < 9; i++)
+            for (int i = 0; i < ROUNDAMOUNT - 1; i++)
             {
                 SubBytes128(data);
                 ShiftRows128(data);
@@ -239,24 +239,49 @@ namespace tools
             delete[] roundkeys;
         }
 
-        void InvSubBytes128(unsigned char *data) {}
-        void InvShiftRows128(unsigned char *data) {}
-        void InvMixColumns128(unsigned char *data) {}
+        void InvSubBytes128(unsigned char *data) {
+            for (int i = 0; i < 16; i++)
+            {
+                data[i] = invsbox[data[i]];
+            }
+        }
+        void InvShiftRows128(unsigned char *data) {
+            for (int i = 0; i < 4; i++)
+            {
+                unsigned char copy[] = {data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]};
+                for (int t = 0; t < 4; t++)
+                {
+                    data[i * 4 + (t + i) % 4] = copy[t];
+                }
+            }
+        }
+        void InvMixColumns128(unsigned char *data) {
+            for (int i = 0; i < 4; i++) {
+                unsigned char a0 = data[i * 4];
+                unsigned char a1 = data[i * 4 + 1];
+                unsigned char a2 = data[i * 4 + 2];
+                unsigned char a3 = data[i * 4 + 3];
+                data[i * 4] = GFMult(14, a0) ^ GFMult(11, a1) ^ GFMult(13, a2) ^ GFMult(9, a3);
+                data[i * 4 + 1] = GFMult(9, a0) ^ GFMult(14, a1) ^ GFMult(11, a2) ^ GFMult(13, a3);
+                data[i * 4 + 2] = GFMult(13, a0) ^ GFMult(9, a1) ^ GFMult(14, a2) ^ GFMult(11, a3);
+                data[i * 4 + 3] = GFMult(11, a0) ^ GFMult(13, a1) ^ GFMult(9, a2) ^ GFMult(14, a3);
+            }
+        }
 
         void DecryptAES128(unsigned char *data, unsigned char *key)
         {
             unsigned char *roundkeys = ExpandRoundKey128(key);
-            AddRoundKey128(data, roundkeys);
+            AddRoundKey128(data, roundkeys + 10 * WORDSIZE * 4);
             InvShiftRows128(data);
             InvSubBytes128(data);
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < ROUNDAMOUNT - 1; i++)
             {
                 AddRoundKey128(data, roundkeys + 10 * WORDSIZE * 4 - (i + 1) * WORDSIZE * 4);
                 InvMixColumns128(data);
                 InvShiftRows128(data);
                 InvSubBytes128(data);
             }
-            AddRoundKey128(data, roundkeys + 10 * WORDSIZE * 4);
+            AddRoundKey128(data, roundkeys);
             delete[] roundkeys;
          }
 
