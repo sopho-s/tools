@@ -173,15 +173,15 @@ namespace tools
             }
             output = output.substr(0, output.size() - 2);
             User userobj;
-            userobj.uuid = std::stoi(split(split(split(output, " ")[0], "=")[1], "(")[0]);
-            userobj.guid = std::stoi(split(split(split(output, " ")[1], "=")[1], "(")[0]);
-            userobj.name = split(split(split(output, " ")[0], "(")[1], ")")[0];
-            std::string groups = split(output, "groups=")[1];
-            std::vector<std::string> groupsvec = split(groups, "),");
+            userobj.uuid = std::stoi(Split(Split(Split(output, " ")[0], "=")[1], "(")[0]);
+            userobj.guid = std::stoi(Split(Split(Split(output, " ")[1], "=")[1], "(")[0]);
+            userobj.name = Split(Split(Split(output, " ")[0], "(")[1], ")")[0];
+            std::string groups = Split(output, "groups=")[1];
+            std::vector<std::string> groupsvec = Split(groups, "),");
             userobj.groups = new std::pair<int, std::string>[groupsvec.size()];
             for (int i = 0; i < groupsvec.size(); i++)
             {
-                userobj.groups[i] = std::make_pair(std::stoi(split(groupsvec[i], "(")[0]), split(groupsvec[i], "(")[1]);
+                userobj.groups[i] = std::make_pair(std::stoi(Split(groupsvec[i], "(")[0]), Split(groupsvec[i], "(")[1]);
             }
             userobj.groupamount = groupsvec.size();
             return userobj;
@@ -222,7 +222,7 @@ namespace tools
             std::vector<Group> groups;
             while (std::getline(file, line))
             {
-                std::vector<std::string> group = split(line, ":");
+                std::vector<std::string> group = Split(line, ":");
                 std::vector<User> groupusers;
                 for (int i = 3; i < group.size(); i++)
                 {
@@ -280,7 +280,7 @@ namespace tools
             std::string line;
             while (std::getline(file, line))
             {
-                std::vector<std::string> group = split(line, ":");
+                std::vector<std::string> group = Split(line, ":");
                 if (group[0] == groupstr)
                 {
                     std::vector<User> groupusers;
@@ -322,7 +322,6 @@ namespace tools
             }
             return userobj;
         }
-        #endif
 
         Group GetGroup(std::string groupstr)
         {
@@ -353,5 +352,6 @@ namespace tools
             }
             return groups;
         }
+        #endif
     }
 }
