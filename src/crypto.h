@@ -32,12 +32,12 @@ namespace tools
         unsigned char *ExpandRoundKey128(unsigned char *key);
 
         void AddRoundKey128(unsigned char *data, unsigned char *key);
-        void SubBytes128(unsigned char *data, unsigned char sbox[]);
+        void SubBytes128(unsigned char *data);
         void ShiftRows128(unsigned char *data);
         void MixColumns128(unsigned char *data);
         void EncryptAES128(unsigned char *data, unsigned char *key);
 
-        void InvSubBytes128(unsigned char *data, unsigned char sbox[]);
+        void InvSubBytes128(unsigned char *data);
         void InvShiftRows128(unsigned char *data);
         void InvMixColumns128(unsigned char *data);
         void DecryptAES128(unsigned char *data, unsigned char *key);

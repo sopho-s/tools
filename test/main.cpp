@@ -471,15 +471,6 @@ TEST_CASE("GFInv of one returns one")
     CHECK(GFInv(1) == 1);
 }
 
-TEST_CASE("GetSBox returns 256 element array")
-{
-    unsigned char* sbox = GetSBox();
-    REQUIRE(sbox != nullptr);
-    // S-box entry for 0x00 should be 0x63 in standard AES
-    // (though implementation may differ)
-    delete[] sbox;
-}
-
 TEST_CASE("AddRoundKey128 XORs data with key")
 {
     unsigned char data[16] = {0};
@@ -514,15 +505,14 @@ TEST_CASE("AddRoundKey128 is self-inverse")
 TEST_CASE("ShiftRows128 modifies data in place")
 {
     unsigned char data[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    unsigned char original[16];
-    std::memcpy(original, data, 16);
+    unsigned char afterdata[16] = {0, 1, 2, 3, 5, 6, 7, 4, 10, 11, 8, 9, 15, 12, 13, 14};
     ShiftRows128(data);
     // Verify at least some bytes changed
-    bool changed = false;
+    bool shifted = true;
     for (int i = 0; i < 16; i++) {
-        if (data[i] != original[i]) changed = true;
+        if (data[i] != afterdata[i]) shifted = false;
     }
-    CHECK(changed);
+    CHECK(shifted);
 }
 
 TEST_CASE("ExpandRoundKey128 returns 176 bytes (11 round keys)")
@@ -542,17 +532,17 @@ TEST_CASE("EncryptAES128 modifies data")
 {
     unsigned char data[16] = {0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
                               0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
-    unsigned char original[16];
-    std::memcpy(original, data, 16);
+    unsigned char afterdata[16] = {0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,
+                                   0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32};
     unsigned char key[16] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
                              0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
     EncryptAES128(data, key);
     // Verify data was modified
-    bool changed = false;
+    bool good = true;
     for (int i = 0; i < 16; i++) {
-        if (data[i] != original[i]) changed = true;
+        if (data[i] != afterdata[i]) good = false;
     }
-    CHECK(changed);
+    CHECK(good);
 }
 
 TEST_CASE("DecryptAES128 undoes the encryption")
