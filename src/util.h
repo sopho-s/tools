@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdint.h>
+#include <cstdlib>
 #pragma once
 
 namespace tools
@@ -30,5 +31,12 @@ namespace tools
 
         bool ArgExist(char **begin, char **end, const std::string &option);
         char *GetArg(char **begin, char **end, const std::string &option);
+
+        template <typename T>
+        T GCD(T a, T b);
+        template <typename T>
+        T PowerMod(T base, T expo, T m);
+        template <typename T>
+        T ModInverse(T e, T phi);
     }
 }

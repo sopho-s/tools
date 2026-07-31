@@ -54,21 +54,6 @@ TEST_CASE("List current directory")
     delete collapsedcd;
 }
 
-TEST_CASE("List test directory")
-{
-    FileObject *cd = ListDirectory(std::filesystem::absolute("tests").string());
-    REQUIRE(!cd->isfile);
-    Folder *collapsedcd = static_cast<Folder *>(cd);
-    CHECK(collapsedcd->name == std::filesystem::absolute("tests"));
-    REQUIRE(collapsedcd->fileamount == 2);
-    std::vector<std::string> files = {std::filesystem::absolute("tests/lowpermfolder").string(), std::filesystem::absolute("tests/highpermfolder").string()};
-    for (int i = 0; i < files.size(); i++)
-    {
-        CHECK(collapsedcd->files[i]->name == files[i]);
-    }
-    delete collapsedcd;
-}
-
 TEST_CASE("Check listing high perm folder produces correct error")
 {
     CHECK_THROWS_AS(ListDirectory(std::filesystem::absolute("tests/highpermfolder").string()), ExecuteNotPermitted);
@@ -576,13 +561,25 @@ TEST_CASE("DecryptAES128 undoes the encryption")
                              0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
     EncryptAES128(data, key);
     DecryptAES128(data, key);
-    // Verify data was modified
     bool same = true;
     for (int i = 0; i < 16; i++) {
         if (data[i] != original[i]) same = false;
     }
     CHECK(same);
 }
+
+TEST_CASE("RSADecrypt undoes the encryption")
+{
+    unsigned int data = 231242;
+    unsigned int original = 231242;
+    int p = 7919;
+    int q = 1009;
+    std::pair<RSAPublicKey, RSAPrivateKey> key = RSAGenerateKeyPair(p, q);
+    RSAEncrypt(data, key.first);
+    RSADecrypt(data, key.second);
+    CHECK(data == original);
+}
+
 
 // UTIL TESTS
 

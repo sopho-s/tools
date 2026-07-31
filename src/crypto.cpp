@@ -64,7 +64,7 @@ namespace tools
         }
 
         template <typename T>
-        T EncryptXOR(T data, T key)
+        inline T EncryptXOR(T data, T key)
         {
             return data ^ key;
         }
@@ -76,6 +76,39 @@ namespace tools
         template char *EncryptXOR<char>(char *, char, int);
         template char *EncryptXOR<char>(char *, char *, int);
         template char EncryptXOR<char>(char, char);
+
+        std::pair<RSAPublicKey, RSAPrivateKey> RSAGenerateKeyPair(int p, int q) {
+            RSAPrivateKey priv;
+            RSAPublicKey pub;
+            int n = p * q;
+            int phi = (p - 1) * (q - 1);
+            int e = 2;
+            for (e = 2; 2 < phi; e++) {
+                if (GCD<int>(e, phi) == 1) {
+                    break;
+                }
+            }
+            int d = ModInverse(e, phi);
+            priv.d = d;
+            pub.n = n;
+            priv.n = n;
+            pub.e = e;
+            return {pub, priv};
+        }
+
+        template <typename T>
+        void RSAEncrypt(T &message, RSAPublicKey key) {
+            message = PowerMod<T>(message, (T)key.e, (T)key.n);
+        }
+        template <typename T>
+        void RSADecrypt(T &message, RSAPrivateKey key) {
+            message = PowerMod<T>(message, (T)key.d, (T)key.n);
+        }
+        
+        template void RSAEncrypt(int &message, RSAPublicKey key);
+        template void RSAEncrypt(unsigned int &message, RSAPublicKey key);
+        template void RSADecrypt(int &message, RSAPrivateKey key);
+        template void RSADecrypt(unsigned int &message, RSAPrivateKey key);
 
         unsigned char GFMult(unsigned char a, unsigned char b)
         {
@@ -283,13 +316,6 @@ namespace tools
             }
             AddRoundKey128(data, roundkeys);
             delete[] roundkeys;
-         }
-
-        void CTRDRBGUpdate(AESState &state, uint8_t seedmaterial[])
-        {
-            for (int i = 0; i < 2; i++)
-            {
-            }
         }
 
         AESState AESPRNGInit(uint32_t seed)

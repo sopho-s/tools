@@ -1,11 +1,12 @@
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
+#include "util.h"
 
 #pragma once
 #define WORDSIZE 4
 #define ROUNDAMOUNT 11
-
+using namespace tools::util;
 namespace tools
 {
     namespace crypto
@@ -24,6 +25,24 @@ namespace tools
             uint8_t counter[16] = {0};
             uint64_t reseedcounter = 0;
         };
+
+        struct RSAPublicKey 
+        {
+            unsigned int e;
+            unsigned int n;
+        };
+
+        struct RSAPrivateKey
+        {
+            unsigned int d;
+            unsigned int n;
+        };
+
+        std::pair<RSAPublicKey, RSAPrivateKey> RSAGenerateKeyPair(int p, int q);
+        template <typename T>
+        void RSAEncrypt(T &message, RSAPublicKey key);
+        template <typename T>
+        void RSADecrypt(T &message, RSAPrivateKey key);
 
         unsigned char GFMult(unsigned char a, unsigned char b);
         unsigned char GFInv(unsigned char a);

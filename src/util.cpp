@@ -206,5 +206,38 @@ namespace tools
             }
             return 0;
         }
+
+        template <typename T>
+        T GCD(T a, T b) {
+            if (a == 0)
+                return b;
+            return GCD<T>(b % a, a);
+        }
+        template int GCD<int>(int a, int b);
+        template <typename T>
+        T PowerMod(T base, T expo, T m) {
+            T residual = 1;
+            base = base % m;
+            while (expo > 0) {
+                if (expo & 1) {
+                    residual = (residual * 1LL * base) % m;
+                }
+                base = (base * 1LL * base) % m;
+                expo = expo / (int)2;
+            }
+            return residual;
+        }
+        template int PowerMod<int>(int base, int expo, int m);
+        template unsigned int PowerMod<unsigned int>(unsigned int base, unsigned int expo, unsigned int m);
+        template <typename T>
+        T ModInverse(T e, T phi) {
+            for (int d = 2; d < phi; d++) {
+                if ((e * d) % phi == 1) {
+                    return d;
+                }
+            }
+            return -1;
+        }
+        template int ModInverse<int>(int e, int phi);
     }
 }
