@@ -38,6 +38,11 @@ namespace tools
             unsigned int n;
         };
 
+        struct NTRUPrivateKey
+        {
+            
+        }
+
         std::pair<RSAPublicKey, RSAPrivateKey> RSAGenerateKeyPair(int p, int q);
         template <typename T>
         void RSAEncrypt(T &message, RSAPublicKey key);
