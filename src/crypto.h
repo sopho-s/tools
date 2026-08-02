@@ -2,11 +2,13 @@
 #include <cstring>
 #include <algorithm>
 #include "util.h"
+#include "maths.h"
 
 #pragma once
 #define WORDSIZE 4
 #define ROUNDAMOUNT 11
 using namespace tools::util;
+using namespace tools::maths;
 namespace tools
 {
     namespace crypto
@@ -40,14 +42,22 @@ namespace tools
 
         struct NTRUPrivateKey
         {
-            
-        }
+            ConvolutionRingPolynomial f;
+            ConvolutionRingPolynomial fp;
+        };
+
+        struct NTRUPublicKey
+        {
+            ConvolutionRingPolynomial h;
+        };
 
         std::pair<RSAPublicKey, RSAPrivateKey> RSAGenerateKeyPair(int p, int q);
         template <typename T>
         void RSAEncrypt(T &message, RSAPublicKey key);
         template <typename T>
         void RSADecrypt(T &message, RSAPrivateKey key);
+
+        std::pair<NTRUPublicKey, NTRUPrivateKey> NTRUGenerateKeyPair(int p, int q);
 
         unsigned char GFMult(unsigned char a, unsigned char b);
         unsigned char GFInv(unsigned char a);

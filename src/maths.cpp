@@ -103,10 +103,10 @@ namespace tools {
 
         ConvolutionRingPolynomial ConvolutionRingPolynomial::operator * (const ConvolutionRingPolynomial &other) {
             int newmax = this->maxdegree;
-            int* newpoly = new int[newmax];
+            int* newpoly = new int[newmax]();
             for (int i = 0; i < newmax; i++) {
                 for (int t = 0; t < newmax; t++) {
-                    newpoly[(i + t) % newmax] = this->polynomial[i] * other.polynomial[t];
+                    newpoly[(i + t) % newmax] += this->polynomial[i] * other.polynomial[t];
                 }
             }
             return ConvolutionRingPolynomial(newpoly, newmax);

@@ -110,6 +110,10 @@ namespace tools
         template void RSADecrypt(int &message, RSAPrivateKey key);
         template void RSADecrypt(unsigned int &message, RSAPrivateKey key);
 
+        std::pair<NTRUPublicKey, NTRUPrivateKey> NTRUGenerateKeyPair(int p, int q) {
+            ;
+        }
+
         unsigned char GFMult(unsigned char a, unsigned char b)
         {
             unsigned char result = 0;
